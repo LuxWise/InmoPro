@@ -1,4 +1,4 @@
-package com.example.Inmopro.v1.Util.jwt;
+package com.example.Inmopro.v1.Service.Jwt;
 
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;

@@ -1,4 +1,4 @@
-package com.example.Inmopro.v1.Controller.Auth;
+package com.example.Inmopro.v1.Dto.Auth;
 
 public class RegisterRequest {
     String name;
