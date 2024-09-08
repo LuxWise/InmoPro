@@ -1,8 +1,11 @@
-package com.example.Inmopro.v1.Controller.Auth;
+package com.example.Inmopro.v1.Service.Auth;
 
-import com.example.Inmopro.v1.Repository.UserRepository;
-import com.example.Inmopro.v1.Model.User.Users;
-import com.example.Inmopro.v1.Util.jwt.JwtService;
+import com.example.Inmopro.v1.Controller.Auth.AuthResponse;
+import com.example.Inmopro.v1.Dto.Auth.LoginRequest;
+import com.example.Inmopro.v1.Dto.Auth.RegisterRequest;
+import com.example.Inmopro.v1.Repository.UsersRepository;
+import com.example.Inmopro.v1.Model.Users.Users;
+import com.example.Inmopro.v1.Service.Jwt.JwtService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -14,7 +17,7 @@ import org.springframework.stereotype.Service;
 @RequiredArgsConstructor
 public class AuthService {
 
-    private final UserRepository userRepository;
+    private final UsersRepository userRepository;
     private final JwtService jwtService;
     private final PasswordEncoder passwordEncoder;
     private final AuthenticationManager authenticationManager;
