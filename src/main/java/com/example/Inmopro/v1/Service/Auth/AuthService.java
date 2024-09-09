@@ -2,15 +2,14 @@ package com.example.Inmopro.v1.Service.Auth;
 
 import com.example.Inmopro.v1.Controller.Auth.AuthResponse;
 import com.example.Inmopro.v1.Dto.Auth.LoginRequest;
-import com.example.Inmopro.v1.Dto.Auth.RegisterRequest;
 import com.example.Inmopro.v1.Repository.UsersRepository;
 import com.example.Inmopro.v1.Model.Users.Users;
 import com.example.Inmopro.v1.Service.Jwt.JwtService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.BadCredentialsException;
+import org.springframework.security.authentication.LockedException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -19,28 +18,29 @@ public class AuthService {
 
     private final UsersRepository userRepository;
     private final JwtService jwtService;
-    private final PasswordEncoder passwordEncoder;
     private final AuthenticationManager authenticationManager;
+    private final UserService userService;
 
     public AuthResponse login(LoginRequest request) {
-        authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(request.getEmail(), request.getPassword()));
-        UserDetails user = userRepository.findByEmail(request.getEmail()).orElseThrow();
+        Users user = userRepository.findByEmail(request.getEmail())
+                .orElseThrow(() -> new BadCredentialsException("Bad credentials"));
+
+        if (user.isAccountLocked()) {
+            throw new LockedException("locked account.Change password.");
+        }
+
+        try {
+            authenticationManager.authenticate(
+                    new UsernamePasswordAuthenticationToken(request.getEmail(), request.getPassword())
+            );
+        } catch (BadCredentialsException e) {
+            userService.increaseFailedAttempts(user);
+            throw new BadCredentialsException("Bad credentials");
+        }
+
+        userService.resetFailedAttempts(user.getEmail());
         String token = jwtService.getToken(user);
-        return AuthResponse.builder().token(token).build();
+        return AuthResponse.builder().token(token).message("Access Allowed").build();
     }
 
-    public AuthResponse register(RegisterRequest request){
-        Users user = Users.builder()
-                .name(request.getName())
-                .lastname(request.getLastname())
-                .email(request.getEmail())
-                .phone(request.getPhone())
-                .password(passwordEncoder.encode(request.getPassword()))
-                .role_id(1)
-                .build();
-
-        userRepository.save(user);
-
-        return AuthResponse.builder().token(jwtService.getToken(user)).build();
-    }
 }
