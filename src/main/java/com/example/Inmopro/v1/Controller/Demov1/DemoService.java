@@ -7,6 +7,6 @@ import org.springframework.stereotype.Service;
 @RequiredArgsConstructor
 public class DemoService {
     public static String create(DemoRequest request) {
-        return "Number is " + request.getNumber();
+        return "El numero " + request.getNumber();
     }
 }

@@ -42,6 +42,19 @@ public class Users implements UserDetails {
     @Column(nullable = false)
     Integer role_id;
 
+    @Column(name = "failed_login_attempts")
+    Integer failedLoginAttempts;
+
+    @Column(name = "account_locked")
+    Boolean accountLocked;
+
+    @Column(name = "password_changed")
+    Boolean passwordChanged;
+
+    public boolean isAccountLocked() {
+        return accountLocked;
+    }
+
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
         return List.of();
@@ -58,9 +71,7 @@ public class Users implements UserDetails {
     }
 
     @Override
-    public boolean isAccountNonLocked() {
-        return true;
-    }
+    public boolean isAccountNonLocked() { return true;}
 
     @Override
     public boolean isCredentialsNonExpired() {

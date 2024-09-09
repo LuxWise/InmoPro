@@ -1,10 +1,11 @@
 package com.example.Inmopro.v1.Controller.Auth;
 
 import com.example.Inmopro.v1.Dto.Auth.LoginRequest;
-import com.example.Inmopro.v1.Dto.Auth.RegisterRequest;
 import com.example.Inmopro.v1.Service.Auth.AuthService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.authentication.BadCredentialsException;
+import org.springframework.security.authentication.LockedException;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -19,14 +20,14 @@ public class AuthController {
 
     @PostMapping(value = "login")
     public ResponseEntity<AuthResponse> login(@RequestBody LoginRequest request) {
-        return ResponseEntity.ok(authService.login(request));
+        try {
+            return ResponseEntity.ok(authService.login(request));
+        } catch (BadCredentialsException e) {
+            return ResponseEntity.status(401).body(AuthResponse.builder().message("Error: " + e.getMessage()).build());
+        } catch (LockedException e) {
+            return ResponseEntity.status(423).body(AuthResponse.builder().message("Error: " + e.getMessage()).build());
+        } catch (Exception e) {
+            return ResponseEntity.status(500).body(AuthResponse.builder().message("Error: " + e.getMessage()).build());
+        }
     }
-
-    @PostMapping(value = "register")
-    public ResponseEntity<AuthResponse> register(@RequestBody RegisterRequest request) {
-        System.out.println("Registering user: " + request.getEmail());
-        return ResponseEntity.ok(authService.register(request));
-    }
-
-
 }
