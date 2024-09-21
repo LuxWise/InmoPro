@@ -2,8 +2,8 @@ package com.example.Inmopro.v1.Service.Auth;
 
 import com.example.Inmopro.v1.Controller.Auth.AuthResponse;
 import com.example.Inmopro.v1.Dto.Auth.LoginRequest;
-import com.example.Inmopro.v1.Repository.UsersRepository;
 import com.example.Inmopro.v1.Model.Users.Users;
+import com.example.Inmopro.v1.Repository.UsersRepository;
 import com.example.Inmopro.v1.Service.Jwt.JwtService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.authentication.AuthenticationManager;

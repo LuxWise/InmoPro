@@ -7,7 +7,6 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
-
 import java.util.Collection;
 import java.util.List;
 
@@ -39,9 +38,6 @@ public class Users implements UserDetails {
     @Column(nullable = false)
     String password;
 
-    @Column(nullable = false)
-    Integer role_id;
-
     @Column(name = "failed_login_attempts")
     Integer failedLoginAttempts;
 
@@ -50,6 +46,10 @@ public class Users implements UserDetails {
 
     @Column(name = "password_changed")
     Boolean passwordChanged;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "role_id", nullable = false)
+    Roles role;
 
     public boolean isAccountLocked() {
         return accountLocked;
