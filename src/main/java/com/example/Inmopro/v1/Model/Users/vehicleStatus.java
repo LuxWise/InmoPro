@@ -11,17 +11,14 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 @Entity
-@Table(name = "Roles")
-public class Roles {
+@Table(name = "vehicleStatus")
+public class vehicleStatus {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     Integer id;
 
     @Column(nullable = false)
-    String role_name;
-
-    @Column(nullable = false)
-    String description;
+    Integer vehicleStatus;
 
     @Column(nullable = false)
     boolean visible;

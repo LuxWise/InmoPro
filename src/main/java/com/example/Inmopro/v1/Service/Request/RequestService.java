@@ -10,7 +10,6 @@ import com.example.Inmopro.v1.Service.Jwt.JwtService;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
-
 import java.util.Optional;
 
 @Service
@@ -32,7 +31,7 @@ public class RequestService {
             if (UserOptional.isPresent()) {
                 Users users = UserOptional.get();
                 Integer userId = users.getUser_id();
-                Integer userRole = users.getRole_id();
+                Integer userRole = users.getRole().getId();
 
                 if (userRole != 1){
                     return RequestResponse.builder().message("User invalid").build();
