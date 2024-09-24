@@ -1,5 +1,6 @@
 package com.example.Inmopro.v1.Model.Request;
 
+import com.example.Inmopro.v1.Model.Users.Users;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -21,13 +22,15 @@ public class Request {
     @Column(name = "request_id")
     private Integer requestId;
 
-    @Column(nullable = false)
-    private Integer tenant_id;
+    @OneToOne
+    @JoinColumn( name = "tenant_id", nullable = false)
+    private Users tenant;
 
-    @Column(nullable = false)
-    private Integer request_type_id;
+    @OneToOne
+    @JoinColumn(name = "request_type_id", nullable = false)
+    private RequestType requestTypeId;
 
-    @Column(nullable = false)
+    @JoinColumn(nullable = false)
     private Integer status_id;
 
     @Column(nullable = false)
