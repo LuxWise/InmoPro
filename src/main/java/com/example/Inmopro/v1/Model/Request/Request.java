@@ -30,8 +30,8 @@ public class Request {
     @JoinColumn(name = "request_type_id", nullable = false)
     private RequestType requestTypeId;
 
-    @JoinColumn(nullable = false)
-    private Integer status_id;
+    @JoinColumn(name = "status_id" , nullable = false)
+    private Integer statusId;
 
     @Column(nullable = false)
     private String description;

@@ -20,10 +20,10 @@ public class RequestType {
     @Column(name = "request_type_name", nullable = false)
     private String requestTypeName;
 
-    @Column(nullable = false)
+    @Column(name = "description", nullable = false)
     private String description;
 
-    @Column(nullable = false)
+    @Column(name = "visible", nullable = false)
     private boolean visible;
 
 }

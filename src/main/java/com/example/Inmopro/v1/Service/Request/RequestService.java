@@ -44,17 +44,20 @@ public class RequestService {
                     return RequestResponse.builder().message("User invalid").build();
                 }
 
-                // Crear la entidad Request con la relación a la entidad RequestType
                 Request requestEntity = Request.builder()
-                        .tenant(users)  // Aquí pasamos la entidad Users
-                        .requestTypeId(requestType)  // Pasamos la entidad RequestType
-                        .status_id(1)
+                        .tenant(users)
+                        .requestTypeId(requestType)
+                        .statusId(1)
                         .description(request.getDescription())
                         .build();
 
                 requestRepository.save(requestEntity);
 
-                System.out.println("Request ID: " + requestEntity.getRequestId());
+                followUpRequestRepository.findAll().forEach(existingFollowUpRequest -> {
+                    existingFollowUpRequest.setInForce(false);
+                    followUpRequestRepository.save(existingFollowUpRequest);
+                });
+
 
                 FollowUpRequest followUpRequest = FollowUpRequest.builder()
                         .requestId(requestEntity.getRequestId())

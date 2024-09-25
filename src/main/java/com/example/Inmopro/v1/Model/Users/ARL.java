@@ -15,12 +15,12 @@ import lombok.NoArgsConstructor;
 public class ARL {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    Integer id;
+    private Integer id;
 
     @Column(nullable = false)
-    String ARL;
+    private String ARL;
 
     @Column(nullable = false)
-    boolean visible;
+   private boolean visible;
 
 }
