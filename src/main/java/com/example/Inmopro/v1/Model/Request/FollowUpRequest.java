@@ -20,11 +20,13 @@ public class FollowUpRequest {
     @GeneratedValue(strategy = GenerationType.AUTO)
     private UUID id;
 
-    @Column(name = "request_id", nullable = false)
-    private Integer requestId;
+    @ManyToOne
+    @JoinColumn(name = "request_id", nullable = false)
+    private Request requestId;
 
-    @Column(name = "status_id", nullable = false)
-    private Integer statusId;
+    @ManyToOne
+    @JoinColumn(name = "status_id", nullable = false)
+    private RequestStatus statusId;
 
     @Column(name = "in_force", nullable = false)
     private boolean inForce;

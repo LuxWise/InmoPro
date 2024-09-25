@@ -15,11 +15,11 @@ import lombok.NoArgsConstructor;
 public class Contractor {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    Integer contractor_id;
+    private Integer contractor_id;
 
     @OneToOne
     @JoinColumn(name = "user_id", nullable = false)
-    Users user;
+    private Users user;
 
     @Column(nullable = false)
     String document;

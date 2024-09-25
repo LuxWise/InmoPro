@@ -4,16 +4,15 @@ import com.example.Inmopro.v1.Controller.Request.RequestResponse;
 import com.example.Inmopro.v1.Dto.Request.RequestRequest;
 import com.example.Inmopro.v1.Model.Request.FollowUpRequest;
 import com.example.Inmopro.v1.Model.Request.Request;
+import com.example.Inmopro.v1.Model.Request.RequestStatus;
 import com.example.Inmopro.v1.Model.Request.RequestType;
 import com.example.Inmopro.v1.Model.Users.Users;
-import com.example.Inmopro.v1.Repository.FollowUpRequestRepository;
-import com.example.Inmopro.v1.Repository.RequestRepository;
-import com.example.Inmopro.v1.Repository.RequestTypeRepository;
-import com.example.Inmopro.v1.Repository.UsersRepository;
+import com.example.Inmopro.v1.Repository.*;
 import com.example.Inmopro.v1.Service.Jwt.JwtService;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+
 import java.util.Optional;
 
 @Service
@@ -25,6 +24,7 @@ public class RequestService {
     private final JwtService jwtService;
     private final UsersRepository usersRepository;
     private final RequestTypeRepository requestTypeRepository;
+    private final RequestStatusRepository requestStatusRepository;
 
     public RequestResponse create(RequestRequest request, HttpServletRequest httpRequest) {
         String authorizationHeader = httpRequest.getHeader("Authorization");
@@ -34,31 +34,36 @@ public class RequestService {
             String email = jwtService.getUsernameFromToken(token);
             Optional<Users> userOptional = usersRepository.findByEmail(email);
             Optional<RequestType> requestTypeOptional = requestTypeRepository.findById(request.getRequestType());
+            Optional<RequestStatus> requestStatusOptional = requestStatusRepository.findById(1);
 
-            if (userOptional.isPresent() && requestTypeOptional.isPresent()) {
+            if (userOptional.isPresent() && requestTypeOptional.isPresent() && requestStatusOptional.isPresent()) {
                 Users users = userOptional.get();
                 Integer userRole = users.getRole().getId();
                 RequestType requestType = requestTypeOptional.get();
+                RequestStatus requestStatus = requestStatusOptional.get();
 
                 if (userRole != 1) {
                     return RequestResponse.builder().message("User invalid").build();
                 }
 
-                // Crear la entidad Request con la relación a la entidad RequestType
+                // Crear el Request
                 Request requestEntity = Request.builder()
-                        .tenant(users)  // Aquí pasamos la entidad Users
-                        .requestTypeId(requestType)  // Pasamos la entidad RequestType
-                        .status_id(1)
+                        .tenant(users)
+                        .requestTypeId(requestType)
+                        .statusId(requestStatus)
                         .description(request.getDescription())
                         .build();
 
                 requestRepository.save(requestEntity);
 
-                System.out.println("Request ID: " + requestEntity.getRequestId());
+                followUpRequestRepository.findByRequestId(requestEntity).forEach(existingFollowUpRequest -> {
+                    existingFollowUpRequest.setInForce(false);
+                    followUpRequestRepository.save(existingFollowUpRequest);
+                });
 
                 FollowUpRequest followUpRequest = FollowUpRequest.builder()
-                        .requestId(requestEntity.getRequestId())
-                        .statusId(1)
+                        .requestId(requestEntity)
+                        .statusId(requestStatus)
                         .inForce(true)
                         .build();
 
@@ -70,5 +75,8 @@ public class RequestService {
 
         return RequestResponse.builder().message("Invalid request").build();
     }
-}
 
+    public RequestResponse viewFollowUpRequest() {
+        return RequestResponse.builder().message("Follow up request").build();
+    }
+}
