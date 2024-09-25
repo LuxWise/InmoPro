@@ -30,8 +30,9 @@ public class Request {
     @JoinColumn(name = "request_type_id", nullable = false)
     private RequestType requestTypeId;
 
+    @ManyToOne
     @JoinColumn(name = "status_id" , nullable = false)
-    private Integer statusId;
+    private RequestStatus statusId;
 
     @Column(nullable = false)
     private String description;

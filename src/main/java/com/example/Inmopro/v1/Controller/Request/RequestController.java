@@ -5,10 +5,7 @@ import com.example.Inmopro.v1.Service.Request.RequestService;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/request")
@@ -20,6 +17,11 @@ public class RequestController {
     @PostMapping("create")
     public ResponseEntity<RequestResponse> create(@RequestBody RequestRequest request, HttpServletRequest httpRequest) {
         return ResponseEntity.ok(RequestService.create(request, httpRequest));
+    }
+
+    @GetMapping("viewFollowRequest")
+    public ResponseEntity<RequestResponse> viewFollowRequest() {
+        return ResponseEntity.ok(RequestService.viewFollowUpRequest());
     }
 
 }
