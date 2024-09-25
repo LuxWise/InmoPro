@@ -1,5 +1,6 @@
 package com.example.Inmopro.v1.Model.Request;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -22,6 +23,7 @@ public class FollowUpRequest {
 
     @ManyToOne
     @JoinColumn(name = "request_id", nullable = false)
+    @JsonIgnore
     private Request requestId;
 
     @ManyToOne
