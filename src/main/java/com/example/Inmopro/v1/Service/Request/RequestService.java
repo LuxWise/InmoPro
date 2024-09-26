@@ -13,6 +13,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
 import java.util.Optional;
 
 @Service
@@ -76,7 +77,13 @@ public class RequestService {
         return RequestResponse.builder().message("Invalid request").build();
     }
 
-    public RequestResponse viewFollowUpRequest() {
-        return RequestResponse.builder().message("Follow up request").build();
+    public List<FollowUpRequest> getFollowUpRequest() {
+        return followUpRequestRepository.findAll();
     }
+
+
+    public List<Object[]> getFollowUpRequestsByStatusName(String statusName) {
+        return followUpRequestRepository.findByStatusName(statusName);
+    }
+
 }
