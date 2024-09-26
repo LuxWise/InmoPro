@@ -18,6 +18,8 @@ public class RequestController {
 
     private final RequestService RequestService;
     private final FollowUpRequestRepository followUpRequestRepository;
+    private final RequestService requestService;
+
 
     @PostMapping("create")
     public ResponseEntity<RequestResponse> create(@RequestBody RequestRequest request, HttpServletRequest httpRequest) {
@@ -26,7 +28,16 @@ public class RequestController {
 
     @GetMapping("followuprequests")
     public ResponseEntity<List<FollowUpRequest>> getAllFollowUpRequests() {
-        List<FollowUpRequest> followUpRequests = followUpRequestRepository.findAll();
+        List<FollowUpRequest> followUpRequests = requestService.getFollowUpRequest();
+        return ResponseEntity.ok(followUpRequests);
+    }
+
+    @GetMapping("/followuprequests/{statusName}")
+    public ResponseEntity<List<Object[]>> getFollowUpRequestsByStatusName(@PathVariable String statusName) {
+        List<Object[]> followUpRequests = requestService.getFollowUpRequestsByStatusName(statusName);
+        if (followUpRequests.isEmpty()) {
+            return ResponseEntity.notFound().build();
+        }
         return ResponseEntity.ok(followUpRequests);
     }
 
