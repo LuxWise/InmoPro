@@ -1,6 +1,6 @@
-package com.example.Inmopro.v1.Controller.Mail;
+package com.example.Inmopro.v1.Dto.Mail;
 
-public class EmailRequest {
+public class MailRequest {
 
         private String to;
         private String subject;

@@ -1,4 +1,4 @@
-package com.example.Inmopro.v1.Model.User;
+package com.example.Inmopro.v1.Model.Users;
 
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
@@ -7,7 +7,6 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
-
 import java.util.Collection;
 import java.util.List;
 
@@ -39,8 +38,22 @@ public class Users implements UserDetails {
     @Column(nullable = false)
     String password;
 
-    @Column(nullable = false)
-    Integer role_id;
+    @Column(name = "failed_login_attempts")
+    Integer failedLoginAttempts;
+
+    @Column(name = "account_locked")
+    Boolean accountLocked;
+
+    @Column(name = "password_changed")
+    Boolean passwordChanged;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "role_id", nullable = false)
+    Roles role;
+
+    public boolean isAccountLocked() {
+        return accountLocked;
+    }
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
@@ -58,9 +71,7 @@ public class Users implements UserDetails {
     }
 
     @Override
-    public boolean isAccountNonLocked() {
-        return true;
-    }
+    public boolean isAccountNonLocked() { return true;}
 
     @Override
     public boolean isCredentialsNonExpired() {
