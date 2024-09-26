@@ -5,6 +5,7 @@ public class RequestRequest {
     private Integer requestType;
     private String description;
 
+
     public Integer getRequestType() {
         return requestType;
     }

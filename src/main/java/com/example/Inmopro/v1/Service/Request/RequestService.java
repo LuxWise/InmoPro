@@ -43,11 +43,14 @@ public class RequestService {
                 RequestType requestType = requestTypeOptional.get();
                 RequestStatus requestStatus = requestStatusOptional.get();
 
+                if (requestStatus.getId() == 1 || requestStatus.getId() == 3 || requestStatus.getId() == 5) {
+                    return RequestResponse.builder().message("Invalid request status").build();
+                }
+
                 if (userRole != 1) {
                     return RequestResponse.builder().message("User invalid").build();
                 }
 
-                // Crear el Request
                 Request requestEntity = Request.builder()
                         .tenant(users)
                         .requestTypeId(requestType)
