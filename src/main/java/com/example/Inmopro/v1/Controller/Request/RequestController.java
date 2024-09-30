@@ -1,5 +1,6 @@
 package com.example.Inmopro.v1.Controller.Request;
 
+import com.example.Inmopro.v1.Dto.Request.RequestCancel;
 import com.example.Inmopro.v1.Dto.Request.RequestRequest;
 import com.example.Inmopro.v1.Model.Request.FollowUpRequest;
 import com.example.Inmopro.v1.Repository.FollowUpRequestRepository;
@@ -20,12 +21,6 @@ public class RequestController {
     private final FollowUpRequestRepository followUpRequestRepository;
     private final RequestService requestService;
 
-
-    @PostMapping("create")
-    public ResponseEntity<RequestResponse> create(@RequestBody RequestRequest request, HttpServletRequest httpRequest) {
-        return ResponseEntity.ok(RequestService.create(request, httpRequest));
-    }
-
     @GetMapping("followuprequests")
     public ResponseEntity<List<FollowUpRequest>> getAllFollowUpRequests() {
         List<FollowUpRequest> followUpRequests = requestService.getFollowUpRequest();
@@ -39,6 +34,16 @@ public class RequestController {
             return ResponseEntity.notFound().build();
         }
         return ResponseEntity.ok(followUpRequests);
+    }
+
+    @PostMapping("create")
+    public ResponseEntity<RequestResponse> create(@RequestBody RequestRequest request, HttpServletRequest httpRequest) {
+        return ResponseEntity.ok(RequestService.create(request, httpRequest));
+    }
+
+    @PostMapping("cancel")
+    public ResponseEntity<RequestResponse> cancel(@RequestBody RequestCancel request) {
+        return ResponseEntity.ok(RequestService.cancel(request));
     }
 
 }
