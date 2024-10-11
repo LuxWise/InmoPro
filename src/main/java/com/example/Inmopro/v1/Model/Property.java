@@ -1,5 +1,7 @@
 package com.example.Inmopro.v1.Model;
 
+import  com.example.Inmopro.v1.Model.Users.Users;
+import  com.example.Inmopro.v1.Model.Geography.*;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -21,22 +23,28 @@ public class Property {
     private double latitude;
     private double longitude;
 
-    @Column(name = "id_address")
-    private Long idAddress;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "id_address", nullable = false)
+    Address Address;
 
-    @Column(name = "id_tenant")
-    private Long idTenant;
+    @ManyToOne
+    @JoinColumn(name = "id_tenant", nullable=false)
+    Users idTenant;
 
-    @Column(name = "id_owner")
-    private Long idOwner;
+    @ManyToOne
+    @JoinColumn(name = "id_owner", nullable=false)
+    Users idOwner;
 
-    @Column(name = "id_monitor")
-    private Long idMonitor;
+    @ManyToOne
+    @JoinColumn(name = "id_monitor", nullable=false)
+    Users idMonitor;
 
-    @Column(name = "id_city")
-    private Long idCity;
+    @ManyToOne
+    @JoinColumn(name = "id_city", nullable=false)
+    City idCity;
 
-    @Column(name = "id_zone")
-    private Long idZone;
+    @ManyToOne
+    @JoinColumn(name = "id_zone", nullable=false)
+    Zone idZone;
 
 }
