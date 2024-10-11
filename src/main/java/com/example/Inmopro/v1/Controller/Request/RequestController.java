@@ -17,6 +17,7 @@ import java.util.List;
 @RequiredArgsConstructor
 public class RequestController {
 
+    private final RequestService RequestService;
     private final FollowUpRequestRepository followUpRequestRepository;
     private final RequestService requestService;
 
@@ -37,12 +38,12 @@ public class RequestController {
 
     @PostMapping("create")
     public ResponseEntity<RequestResponse> create(@RequestBody RequestRequest request, HttpServletRequest httpRequest) {
-        return ResponseEntity.ok(requestService.create(request, httpRequest));
+        return ResponseEntity.ok(RequestService.create(request, httpRequest));
     }
 
     @PostMapping("cancel")
     public ResponseEntity<RequestResponse> cancel(@RequestBody RequestCancel request) {
-        return ResponseEntity.ok(requestService.cancel(request));
+        return ResponseEntity.ok(RequestService.cancel(request));
     }
 
 }
