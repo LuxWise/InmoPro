@@ -5,11 +5,13 @@ import com.example.Inmopro.v1.Dto.Request.RequestRequest;
 import com.example.Inmopro.v1.Model.Request.FollowUpRequest;
 import com.example.Inmopro.v1.Repository.FollowUpRequestRepository;
 import com.example.Inmopro.v1.Service.Request.RequestService;
+import jakarta.mail.MessagingException;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.io.IOException;
 import java.util.List;
 
 @RestController
@@ -17,7 +19,6 @@ import java.util.List;
 @RequiredArgsConstructor
 public class RequestController {
 
-    private final FollowUpRequestRepository followUpRequestRepository;
     private final RequestService requestService;
 
     @GetMapping("followuprequests")
@@ -36,7 +37,7 @@ public class RequestController {
     }
 
     @PostMapping("create")
-    public ResponseEntity<RequestResponse> create(@RequestBody RequestRequest request, HttpServletRequest httpRequest) {
+    public ResponseEntity<RequestResponse> create(@RequestBody RequestRequest request, HttpServletRequest httpRequest) throws IOException, MessagingException {
         return ResponseEntity.ok(requestService.create(request, httpRequest));
     }
 
