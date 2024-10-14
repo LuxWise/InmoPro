@@ -20,6 +20,6 @@ RUN chmod +x /app/init-secrets.sh
 
 EXPOSE 8200 8080
 
-ENV VAULT_ADDR='http://127.0.0.1:8200'
+ENV VAULT_ADDR='http://127.0.0.1:8200'v
 
 CMD ["sh", "-c", "vault server -dev -dev-root-token-id=j3H8p2T5mQ9bF6vY4wZ1R0cG7S & /app/init-secrets.sh && java -jar app.jar"]
