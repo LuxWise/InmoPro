@@ -10,10 +10,16 @@ import com.example.Inmopro.v1.Model.Request.RequestType;
 import com.example.Inmopro.v1.Model.Users.Users;
 import com.example.Inmopro.v1.Repository.*;
 import com.example.Inmopro.v1.Service.Jwt.JwtService;
+import com.example.Inmopro.v1.Service.Mail.MailService;
+import jakarta.mail.MessagingException;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.List;
 import java.util.Optional;
 
@@ -27,8 +33,9 @@ public class RequestService {
     private final UsersRepository usersRepository;
     private final RequestTypeRepository requestTypeRepository;
     private final RequestStatusRepository requestStatusRepository;
+    private final MailService mailService;
 
-    public RequestResponse create(RequestRequest request, HttpServletRequest httpRequest) {
+    public RequestResponse create(RequestRequest request, HttpServletRequest httpRequest) throws IOException, MessagingException {
         String authorizationHeader = httpRequest.getHeader("Authorization");
 
         if (authorizationHeader != null && authorizationHeader.startsWith("Bearer ")) {
@@ -77,7 +84,12 @@ public class RequestService {
 
                 followUpRequestRepository.save(followUpRequest);
 
+                Path filePath = Paths.get("src/main/java/com/example/Inmopro/v1/Util/ejs/RequestMessage.html");
+                String htmlContent = new String(Files.readAllBytes(filePath), "UTF-8");
+                mailService.sendHtmlEmail(users.getEmail(), "Request created", htmlContent);
+
                 return RequestResponse.builder().message("Request created").build();
+
             }
         }
 

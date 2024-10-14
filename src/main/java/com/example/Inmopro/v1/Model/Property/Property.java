@@ -1,4 +1,4 @@
-package com.example.Inmopro.v1.Model;
+package com.example.Inmopro.v1.Model.Property;
 
 import  com.example.Inmopro.v1.Model.Users.Users;
 import  com.example.Inmopro.v1.Model.Geography.*;
