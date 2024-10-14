@@ -1,7 +1,5 @@
 FROM ubuntu:latest
 
-LABEL authors="sanch"
-
 RUN apt-get update && apt-get install -y \
     curl \
     openjdk-17-jdk \
@@ -17,12 +15,11 @@ WORKDIR /app
 
 COPY target/*.jar app.jar
 
-EXPOSE 9010
+COPY init-secrets.sh /app/init-secrets.sh
+RUN chmod +x /app/init-secrets.sh
 
-ENV VAULT_ADDR=http://vault:8200
-ENV VAULT_TOKEN=hvs.Rd92loaeGA2tnSaew4mXzPdn
+EXPOSE 8200 8080
 
-ENTRYPOINT ["sh", "-c", \
-    "vault kv get -format=json secret/application | jq -r '.data.data | to_entries | .[] | \"export \" + .key + \"=\" + .value' > /app/env.sh && \
-    source /app/env.sh && \
-    java -jar app.jar"]
+ENV VAULT_ADDR='http://127.0.0.1:8200'
+
+CMD ["sh", "-c", "vault server -dev -dev-root-token-id=j3H8p2T5mQ9bF6vY4wZ1R0cG7S & /app/init-secrets.sh && java -jar app.jar"]
