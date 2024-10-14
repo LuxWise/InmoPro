@@ -52,10 +52,10 @@ public class RequestService {
                 RequestType requestType = requestTypeOptional.get();
                 RequestStatus requestStatus = requestStatusOptional.get();
 
-                if (requestStatus.getId() == 2 || requestStatus.getId() == 4) {
-                    return RequestResponse.builder().message("Invalid request status").build();
+                boolean existsInProgressRequest = requestRepository.existsByTenantAndStatusId(users, requestStatus);
+                if (existsInProgressRequest) {
+                    return RequestResponse.builder().message("You have a pending request").build();
                 }
-
 
                 if (userRole != 1) {
                     return RequestResponse.builder().message("User invalid").build();
@@ -69,12 +69,6 @@ public class RequestService {
                         .build();
 
                 requestRepository.save(requestEntity);
-
-                followUpRequestRepository.findAll().forEach(existingFollowUpRequest -> {
-                    existingFollowUpRequest.setInForce(false);
-                    followUpRequestRepository.save(existingFollowUpRequest);
-                });
-
 
                 FollowUpRequest followUpRequest = FollowUpRequest.builder()
                         .requestId(requestEntity)
