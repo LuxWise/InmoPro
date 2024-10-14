@@ -17,29 +17,29 @@ public class Address {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    private Integer id;
 
     @ManyToOne
-    @JoinColumn(name = "id_typeRoad", nullable = false)
+    @JoinColumn(name = "id_type_road", nullable = false)
     private TypeRoad idTypeRoad; 
 
-    @Column(name = "NumberRoad", nullable = false)
+    @Column(name = "number_road", nullable = false)
     private Integer numberRoad;
 
     @ManyToOne // Relación con Quadrant (o cualquier otra entidad relevante)
     @JoinColumn(name = "id_quadrant", nullable = false)
     private Quadrant quadrant;
 
-    @Column(name = "NumberRoadGen", nullable = false)
+    @Column(name = "number_road_gen", nullable = false)
     private Integer numberRoadGen;
 
     @ManyToOne // Relación con QuadrantRoadGen (o cualquier otra entidad relevante)
-    @JoinColumn(name = "id_quadrantRoadGen", nullable = false)
+    @JoinColumn(name = "id_quadrant_road_gen", nullable = false)
     private QuadrantRoadGen quadrantRoadGen;
 
-    @Column(name = "plateNumber", nullable = false)
+    @Column(name = "plate_number", nullable = false)
     private Integer plateNumber;
 
-    @Column(name = "complementData", nullable = true)
-    private String complementData;
+    @Column(name = "complement_data")
+    String complementData;
 }

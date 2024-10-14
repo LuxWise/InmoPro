@@ -1,6 +1,5 @@
 package com.example.Inmopro.v1.Model.Geography.QuadrantZone;
 
-
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -12,16 +11,17 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 @Entity
-@Table(name = "TypeRoad") // Nombre de la tabla en la base de datos
+@Table(name = "TypeRoad")
 public class TypeRoad {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @GeneratedValue(strategy = GenerationType.IDENTITY) // Ajusta según tu estrategia de ID
     private Long id;
 
-    @Column(name = "typeRoad", nullable = false)
+    @Column(name = "typeRoad")
     private String typeRoad;
 
-    @Column(name = "visible", nullable = false)
+    @Column(name = "visible")
     private Boolean visible;
 }
+
