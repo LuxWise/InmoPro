@@ -8,6 +8,7 @@ import com.example.Inmopro.v1.Service.Request.RequestService;
 import jakarta.mail.MessagingException;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -37,8 +38,16 @@ public class RequestController {
     }
 
     @PostMapping("create")
-    public ResponseEntity<RequestResponse> create(@RequestBody RequestRequest request, HttpServletRequest httpRequest) throws IOException, MessagingException {
-        return ResponseEntity.ok(requestService.create(request, httpRequest));
+    public ResponseEntity<RequestResponse> create(@RequestBody RequestRequest request, HttpServletRequest httpRequest) {
+        try {
+            return ResponseEntity.ok(requestService.create(request, httpRequest));
+        } catch (IOException e) {
+            e.printStackTrace();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new RequestResponse("Error al leer el archivo"));
+        } catch (MessagingException e) {
+            e.printStackTrace();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new RequestResponse("Error al enviar el correo"));
+        }
     }
 
     @PostMapping("cancel")

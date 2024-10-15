@@ -1,4 +1,4 @@
-package com.example.Inmopro.v1.Service;
+package com.example.Inmopro.v1.Service.Geography;
 
 import com.example.Inmopro.v1.Model.Geography.Address;
 import com.example.Inmopro.v1.Repository.AddressRepository;

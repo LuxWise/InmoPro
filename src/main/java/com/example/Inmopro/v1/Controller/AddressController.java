@@ -1,7 +1,7 @@
 package com.example.Inmopro.v1.Controller;
 
 import com.example.Inmopro.v1.Model.Geography.Address;
-import com.example.Inmopro.v1.Service.AddressService;
+import com.example.Inmopro.v1.Service.Geography.AddressService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 

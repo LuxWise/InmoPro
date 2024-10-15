@@ -14,9 +14,14 @@ import com.example.Inmopro.v1.Service.Mail.MailService;
 import jakarta.mail.MessagingException;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.io.Resource;
+import org.springframework.core.io.ResourceLoader;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
+import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -27,6 +32,9 @@ import java.util.Optional;
 @RequiredArgsConstructor
 public class RequestService {
 
+    @Autowired
+    private ResourceLoader resourceLoader;
+
     private final FollowUpRequestRepository followUpRequestRepository;
     private final RequestRepository requestRepository;
     private final JwtService jwtService;
@@ -34,6 +42,7 @@ public class RequestService {
     private final RequestTypeRepository requestTypeRepository;
     private final RequestStatusRepository requestStatusRepository;
     private final MailService mailService;
+
 
     public RequestResponse create(RequestRequest request, HttpServletRequest httpRequest) throws IOException, MessagingException {
         String authorizationHeader = httpRequest.getHeader("Authorization");
@@ -78,9 +87,12 @@ public class RequestService {
 
                 followUpRequestRepository.save(followUpRequest);
 
-                Path filePath = Paths.get("src/main/java/com/example/Inmopro/v1/Util/ejs/RequestMessage.html");
-                String htmlContent = new String(Files.readAllBytes(filePath), "UTF-8");
-                mailService.sendHtmlEmail(users.getEmail(), "Request created", htmlContent);
+                Resource resource = resourceLoader.getResource("classpath:static/RequestMessage.html");
+                try (InputStream inputStream = resource.getInputStream()) {
+                    String htmlContent = new String(inputStream.readAllBytes(), StandardCharsets.UTF_8);
+                    mailService.sendHtmlEmail(users.getEmail(), "Request created", htmlContent);
+                }
+
 
                 return RequestResponse.builder().message("Request created").build();
 
