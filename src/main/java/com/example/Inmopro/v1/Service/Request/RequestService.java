@@ -1,7 +1,9 @@
 package com.example.Inmopro.v1.Service.Request;
 
 import com.example.Inmopro.v1.Controller.Request.RequestResponse;
+import com.example.Inmopro.v1.Dto.Request.RequestApprove;
 import com.example.Inmopro.v1.Dto.Request.RequestCancel;
+import com.example.Inmopro.v1.Dto.Request.RequestProcess;
 import com.example.Inmopro.v1.Dto.Request.RequestRequest;
 import com.example.Inmopro.v1.Model.Request.FollowUpRequest;
 import com.example.Inmopro.v1.Model.Request.Request;
@@ -25,6 +27,8 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.time.Duration;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -43,6 +47,13 @@ public class RequestService {
     private final RequestStatusRepository requestStatusRepository;
     private final MailService mailService;
 
+    public Optional<Object[]> getAllRequests() {
+        return requestRepository.findAllRequests();
+    }
+
+    public Optional<Object[]> getRequestById(Integer requestId) {
+        return requestRepository.findRequestById(requestId);
+    }
 
     public RequestResponse create(RequestRequest request, HttpServletRequest httpRequest) throws IOException, MessagingException {
         String authorizationHeader = httpRequest.getHeader("Authorization");
@@ -93,7 +104,6 @@ public class RequestService {
                     mailService.sendHtmlEmail(users.getEmail(), "Request created", htmlContent);
                 }
 
-
                 return RequestResponse.builder().message("Request created").build();
 
             }
@@ -102,13 +112,88 @@ public class RequestService {
         return RequestResponse.builder().message("Invalid request").build();
     }
 
-    public List<FollowUpRequest> getFollowUpRequest() {
-        return followUpRequestRepository.findAll();
+    public RequestResponse process(RequestProcess requestProcess, HttpServletRequest httpRequest) throws IOException, MessagingException {
+        String authorizationHeader = httpRequest.getHeader("Authorization");
+
+        if (authorizationHeader != null || authorizationHeader.startsWith("Bared ")) {
+            String token = authorizationHeader.substring(7);
+            String email = jwtService.getUsernameFromToken(token);
+            Optional<Request> requestOptional = requestRepository.findByRequestId(requestProcess.getRequest());
+            Optional<RequestStatus> requestStatusOptional = requestStatusRepository.findById(2);
+            Optional<Users> userOptional = usersRepository.findByEmail(email);
+
+            if (userOptional.isPresent() && requestOptional.isPresent() && requestStatusOptional.isPresent()) {
+                Users users = userOptional.get();
+                Request request = requestOptional.get();
+                Integer userRole = users.getRole().getId();
+                RequestStatus requestStatus = requestStatusOptional.get();
+
+                if (userRole != 2) {
+                    return RequestResponse.builder().message("User invalid").build();
+                }
+
+                if (request.getStatusId().getId() != 1) {
+                    return RequestResponse.builder().message("Request not pending").build();
+                }
+
+                request.setStatusId(requestStatus);
+                requestRepository.save(request);
+
+                Resource resource = resourceLoader.getResource("classpath:static/RequestProcessedMessage.html");
+                try (InputStream inputStream = resource.getInputStream()) {
+                    String htmlContent = new String(inputStream.readAllBytes(), StandardCharsets.UTF_8);
+                    mailService.sendHtmlEmail(users.getEmail(), "Request processed", htmlContent);
+                }
+
+                return RequestResponse.builder().message("Request processed").build();
+            }
+            return RequestResponse.builder().message("Invalid request").build();
+        }
+        return RequestResponse.builder().message("Invalid request").build();
+
     }
 
+    public RequestResponse approve(RequestApprove requestApprove, HttpServletRequest httpRequest) throws IOException, MessagingException {
+        String authorizationHeader = httpRequest.getHeader("Authorization");
 
-    public List<Object[]> getFollowUpRequestsByStatusName(String statusName) {
-        return followUpRequestRepository.findByStatusName(statusName);
+        if (authorizationHeader != null || authorizationHeader.startsWith("Bearer ")) {
+            String token = authorizationHeader.substring(7);
+            String email = jwtService.getUsernameFromToken(token);
+            Optional<Request> requestOptional = requestRepository.findByRequestId(requestApprove.getRequest());
+            Optional<RequestStatus> requestStatusOptional = requestStatusRepository.findById(3);
+            Optional<Users> userOptional = usersRepository.findByEmail(email);
+
+            if (userOptional.isPresent() && requestOptional.isPresent() && requestStatusOptional.isPresent()) {
+                Users users = userOptional.get();
+                Request request = requestOptional.get();
+                Integer userRole = users.getRole().getId();
+                RequestStatus requestStatus = requestStatusOptional.get();
+
+                if (userRole != 3) {
+                    return RequestResponse.builder().message("User invalid").build();
+                }
+
+                if (request.getStatusId().getId() != 2) {
+                    return RequestResponse.builder().message("Request not processed").build();
+                }
+
+                request.setStatusId(requestStatus);
+                requestRepository.save(request);
+
+                Resource resource = resourceLoader.getResource("classpath:static/RequestApprovedMessage.html");
+                try (InputStream inputStream = resource.getInputStream()) {
+                    String htmlContent = new String(inputStream.readAllBytes(), StandardCharsets.UTF_8);
+                    mailService.sendHtmlEmail(users.getEmail(), "Request approved", htmlContent);
+                }
+
+                return RequestResponse.builder().message("Request approve").build();
+            }
+            return RequestResponse.builder().message("Invalid request").build();
+
+        }
+        return RequestResponse.builder().message("Invalid request").build();
+
+
     }
 
     public RequestResponse cancel(RequestCancel requestCancel){
@@ -119,8 +204,12 @@ public class RequestService {
             Request request = requestOptional.get();
             RequestStatus requestStatus = requestStatusOptional.get();
 
-            if (requestStatus.getId() == 2 || requestStatus.getId() == 4) {
-                return RequestResponse.builder().message("Invalid request status").build();
+            LocalDateTime now = LocalDateTime.now();
+            Duration duration = Duration.between(request.getCreatedAt(), now);
+
+
+            if (request.getStatusId().getId() == 2 && duration.toHours() < 24) {
+                return RequestResponse.builder().message("Request already processed").build();
             }
 
             request.setStatusId(requestStatus);
@@ -130,6 +219,14 @@ public class RequestService {
         }
 
         return RequestResponse.builder().message("Invalid request").build();
+    }
+
+    public List<FollowUpRequest> getFollowUpRequest() {
+        return followUpRequestRepository.findAll();
+    }
+
+    public List<Object[]> getFollowUpRequestsByStatusName(String statusName) {
+        return followUpRequestRepository.findByStatusName(statusName);
     }
 
 }
