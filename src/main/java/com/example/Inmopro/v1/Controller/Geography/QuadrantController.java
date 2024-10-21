@@ -3,35 +3,36 @@ package com.example.Inmopro.v1.Controller.Geography;
 
 import com.example.Inmopro.v1.Model.Geography.QuadrantZone.Quadrant;
 import com.example.Inmopro.v1.Service.Geography.QuadrantService;
+import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
+import java.net.URI;
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/quadrants")
+@RequestMapping("/quadrants")
+@RequiredArgsConstructor
 public class QuadrantController {
-    @Autowired
-    private QuadrantService quadrantService;
+    private final QuadrantService quadrantService;
 
     @GetMapping
-    public List<Quadrant> getAllQuadrants() {
-        return quadrantService.findAll();
+    public ResponseEntity<List<Quadrant>> getAllQuadrants() {
+        List<Quadrant> quadrants = quadrantService.findAll();
+        if (quadrants.isEmpty()) {
+            return ResponseEntity.noContent().build();
+        }
+        return ResponseEntity.ok(quadrants);
     }
 
     @GetMapping("/{id}")
-    public Quadrant getQuadrantById(@PathVariable Long id) {
-        return quadrantService.findById(id);
+    public ResponseEntity<Quadrant> getQuadrantById(@PathVariable Long id) {
+        return quadrantService.findById(id)
+                .map(ResponseEntity::ok)
+                .orElseGet(() -> ResponseEntity.notFound().build());
     }
 
-    @PostMapping
-    public Quadrant createQuadrant(@RequestBody Quadrant quadrant) {
-        return quadrantService.save(quadrant);
-    }
-
-    @DeleteMapping("/{id}")
-    public void deleteQuadrant(@PathVariable Long id) {
-        quadrantService.delete(id);
-    }
 }
 
