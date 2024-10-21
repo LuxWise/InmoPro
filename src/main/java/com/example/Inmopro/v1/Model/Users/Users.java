@@ -47,7 +47,7 @@ public class Users implements UserDetails {
     @Column(name = "password_changed")
     Boolean passwordChanged;
 
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne
     @JoinColumn(name = "role_id", nullable = false)
     Roles role;
 

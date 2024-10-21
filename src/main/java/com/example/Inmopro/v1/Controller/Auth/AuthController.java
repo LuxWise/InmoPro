@@ -20,14 +20,19 @@ public class AuthController {
 
     @PostMapping(value = "login")
     public ResponseEntity<AuthResponse> login(@RequestBody LoginRequest request) {
+        return handleLogin(request);
+    }
+
+    private ResponseEntity<AuthResponse> handleLogin(LoginRequest request) {
         try {
             return ResponseEntity.ok(authService.login(request));
         } catch (BadCredentialsException e) {
-            return ResponseEntity.status(401).body(AuthResponse.builder().message("Error: " + e.getMessage()).build());
+            return ResponseEntity.status(401).body(AuthResponse.builder().message("Invalid credentials provided").build());
         } catch (LockedException e) {
-            return ResponseEntity.status(423).body(AuthResponse.builder().message("Error: " + e.getMessage()).build());
+            return ResponseEntity.status(423).body(AuthResponse.builder().message("Account is locked. Please contact support.").build());
         } catch (Exception e) {
-            return ResponseEntity.status(500).body(AuthResponse.builder().message("Error: " + e.getMessage()).build());
+            return ResponseEntity.status(500).body(AuthResponse.builder().message("Internal server error").build());
         }
     }
+
 }
