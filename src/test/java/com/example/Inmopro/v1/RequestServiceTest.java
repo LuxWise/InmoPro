@@ -27,6 +27,7 @@ import static org.mockito.Mockito.*;
 
 
 import java.io.IOException;
+import java.util.List;
 import java.util.Optional;
 
 import jakarta.mail.MessagingException;
@@ -121,7 +122,19 @@ public class RequestServiceTest {
         verify(mailService, never()).sendHtmlEmail(anyString(), anyString(), anyString());
     }
 
+    @Test
+    void testGetFollowUpRequest_Success() {
+        List<FollowUpRequest> mockFollowUpRequests = List.of(new FollowUpRequest());
 
+        when(followUpRequestRepository.findAll()).thenReturn(mockFollowUpRequests);
+
+        List<FollowUpRequest> result = requestService.getFollowUpRequest();
+        
+        assertNotNull(result);
+        assertEquals(1, result.size());
+
+        verify(followUpRequestRepository).findAll();
+    }
 
 
 
