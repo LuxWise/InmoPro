@@ -16,6 +16,7 @@ import com.example.Inmopro.v1.Service.Request.RequestService;
 import jakarta.servlet.http.HttpServletRequest;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
@@ -25,17 +26,23 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 
+import java.io.ByteArrayInputStream;
 
 import java.io.IOException;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
+import java.io.InputStream;
 
 import jakarta.mail.MessagingException;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.core.io.Resource;
+import org.springframework.core.io.ResourceLoader;
+
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
-
+@ExtendWith(MockitoExtension.class)
 public class RequestServiceTest {
 
     @Mock
@@ -59,31 +66,33 @@ public class RequestServiceTest {
     @Mock
     private MailService mailService;
 
+    @Mock
+    private ResourceLoader resourceLoader;
+
     @InjectMocks
     private RequestService requestService;
 
     @Mock
     private HttpServletRequest httpRequest;
 
-    @BeforeEach
-    void setUp() {
-        MockitoAnnotations.openMocks(this);
-    }
-
     @Test
     void testCreate_Success() throws IOException, MessagingException {
+        // Configura el objeto de solicitud
         RequestRequest requestRequest = new RequestRequest();
         requestRequest.setRequestType(1);
         requestRequest.setDescription("Test description");
 
+        // Configura el comportamiento del mock
+        when(httpRequest.getHeader("Authorization")).thenReturn("Bearer test-token");
+        when(jwtService.getUsernameFromToken("test-token")).thenReturn("test@example.com");
+
+        // Configura el usuario simulado
         Users mockUser = new Users();
         Roles mockRole = new Roles();
         mockRole.setId(1);
         mockUser.setRole(mockRole);
         mockUser.setEmail("test@example.com");
 
-        when(httpRequest.getHeader("Authorization")).thenReturn("Bearer test-token");
-        when(jwtService.getUsernameFromToken("test-token")).thenReturn("test@example.com");
         when(usersRepository.findByEmail("test@example.com")).thenReturn(Optional.of(mockUser));
 
         RequestType mockRequestType = new RequestType();
@@ -94,16 +103,24 @@ public class RequestServiceTest {
         mockRequestStatus.setId(1);
         when(requestStatusRepository.findById(1)).thenReturn(Optional.of(mockRequestStatus));
 
+        // Mock del Resource y su InputStream
+        Resource mockResource = mock(Resource.class);
+        InputStream inputStream = new ByteArrayInputStream("Test email content".getBytes());
+        when(mockResource.getInputStream()).thenReturn(inputStream);
+        when(resourceLoader.getResource("classpath:static/RequestMessage.html")).thenReturn(mockResource);
+
+        // Llama al método que estás probando
         RequestResponse response = requestService.create(requestRequest, httpRequest);
 
+        // Afirmaciones para verificar el comportamiento esperado
         assertNotNull(response);
         assertEquals("Request created", response.getMessage());
 
+        // Verifica que los métodos en los repositorios se llamaron como se esperaba
         verify(requestRepository).save(any(Request.class));
         verify(followUpRequestRepository).save(any(FollowUpRequest.class));
         verify(mailService).sendHtmlEmail(eq("test@example.com"), eq("Request created"), anyString());
     }
-
     @Test
     void testCreate_InvalidAuthorization() throws IOException, MessagingException {
         RequestRequest requestRequest = new RequestRequest();
@@ -137,7 +154,7 @@ public class RequestServiceTest {
         verify(followUpRequestRepository).findAll();
     }
 
-    /*@Test
+    @Test
     void testGetFollowUpRequestsByStatusName_Success() {
         List<Object[]> mockResults = (List<Object[]>) List.of(new Object[]{});
 
@@ -151,7 +168,6 @@ public class RequestServiceTest {
         verify(followUpRequestRepository).findByStatusName("Pending");
     }
 
-*/
     @Test
     void testCancel_Success() {
         RequestCancel requestCancel = new RequestCancel();
