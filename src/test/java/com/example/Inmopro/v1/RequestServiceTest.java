@@ -68,45 +68,61 @@ public class RequestServiceTest {
         MockitoAnnotations.openMocks(this);
     }
 
-@Test
-void testCreate_Success() throws IOException, MessagingException {
-    // Configura el objeto de solicitud
-    RequestRequest requestRequest = new RequestRequest();
-    requestRequest.setRequestType(1); // Ajusta según tus necesidades
-    requestRequest.setDescription("Test description");
+    @Test
+    void testCreate_Success() throws IOException, MessagingException {
+        RequestRequest requestRequest = new RequestRequest();
+        requestRequest.setRequestType(1);
+        requestRequest.setDescription("Test description");
 
-    // Configura el usuario simulado
-    Users mockUser = new Users();
-    Roles mockRole = new Roles();
-    mockRole.setId(1); // Asegúrate de que el rol sea válido
-    mockUser.setRole(mockRole);
-    mockUser.setEmail("test@example.com");
+        Users mockUser = new Users();
+        Roles mockRole = new Roles();
+        mockRole.setId(1);
+        mockUser.setRole(mockRole);
+        mockUser.setEmail("test@example.com");
 
-    // Configura el comportamiento del mock
-    when(httpRequest.getHeader("Authorization")).thenReturn("Bearer test-token");
-    when(jwtService.getUsernameFromToken("test-token")).thenReturn("test@example.com");
-    when(usersRepository.findByEmail("test@example.com")).thenReturn(Optional.of(mockUser));
+        when(httpRequest.getHeader("Authorization")).thenReturn("Bearer test-token");
+        when(jwtService.getUsernameFromToken("test-token")).thenReturn("test@example.com");
+        when(usersRepository.findByEmail("test@example.com")).thenReturn(Optional.of(mockUser));
 
-    RequestType mockRequestType = new RequestType();
-    mockRequestType.setId(1); // Asegúrate de que esto coincide con tu lógica
-    when(requestTypeRepository.findById(1)).thenReturn(Optional.of(mockRequestType));
+        RequestType mockRequestType = new RequestType();
+        mockRequestType.setId(1);
+        when(requestTypeRepository.findById(1)).thenReturn(Optional.of(mockRequestType));
 
-    RequestStatus mockRequestStatus = new RequestStatus();
-    mockRequestStatus.setId(1); // Ajusta según tu lógica
-    when(requestStatusRepository.findById(1)).thenReturn(Optional.of(mockRequestStatus));
+        RequestStatus mockRequestStatus = new RequestStatus();
+        mockRequestStatus.setId(1);
+        when(requestStatusRepository.findById(1)).thenReturn(Optional.of(mockRequestStatus));
 
-    // Llama al método que estás probando
-    RequestResponse response = requestService.create(requestRequest, httpRequest);
+        RequestResponse response = requestService.create(requestRequest, httpRequest);
 
-    // Afirmaciones para verificar el comportamiento esperado
-    assertNotNull(response);
-    assertEquals("Request created", response.getMessage());
+        assertNotNull(response);
+        assertEquals("Request created", response.getMessage());
 
-    // Verifica que los métodos en los repositorios se llamaron como se esperaba
-    verify(requestRepository).save(any(Request.class));
-    verify(followUpRequestRepository).save(any(FollowUpRequest.class));
-    verify(mailService).sendHtmlEmail(eq("test@example.com"), eq("Request created"), anyString());
-}
+        verify(requestRepository).save(any(Request.class));
+        verify(followUpRequestRepository).save(any(FollowUpRequest.class));
+        verify(mailService).sendHtmlEmail(eq("test@example.com"), eq("Request created"), anyString());
+    }
+
+    @Test
+    void testCreate_InvalidAuthorization() throws IOException, MessagingException {
+        RequestRequest requestRequest = new RequestRequest();
+        requestRequest.setRequestType(1);
+        requestRequest.setDescription("Test description");
+
+        when(httpRequest.getHeader("Authorization")).thenReturn(null);
+
+
+        RequestResponse response = requestService.create(requestRequest, httpRequest);
+
+        assertNotNull(response);
+        assertEquals("Invalid request", response.getMessage());
+
+        verify(requestRepository, never()).save(any(Request.class));
+        verify(followUpRequestRepository, never()).save(any(FollowUpRequest.class));
+        verify(mailService, never()).sendHtmlEmail(anyString(), anyString(), anyString());
+    }
+
+
+
 
 
 }
