@@ -37,7 +37,7 @@ import java.util.Optional;
 public class RequestService {
 
     @Autowired
-    private ResourceLoader resourceLoader;
+    private final ResourceLoader resourceLoader;
 
     private final FollowUpRequestRepository followUpRequestRepository;
     private final RequestRepository requestRepository;
@@ -46,6 +46,9 @@ public class RequestService {
     private final RequestTypeRepository requestTypeRepository;
     private final RequestStatusRepository requestStatusRepository;
     private final MailService mailService;
+
+
+
 
     public Optional<Object[]> getAllRequests() {
         return requestRepository.findAllRequests();
