@@ -1,7 +1,7 @@
 package com.example.Inmopro.v1;
 
 import com.example.Inmopro.v1.Controller.Request.RequestResponse;
-import com.example.Inmopro.v1.Dto.Request.RequestRequest;
+import com.example.Inmopro.v1.Dto.Request.*;
 import com.example.Inmopro.v1.Model.Calculator;
 import com.example.Inmopro.v1.Model.Request.FollowUpRequest;
 import com.example.Inmopro.v1.Model.Request.Request;
@@ -27,6 +27,7 @@ import static org.mockito.Mockito.*;
 
 
 import java.io.IOException;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -129,13 +130,74 @@ public class RequestServiceTest {
         when(followUpRequestRepository.findAll()).thenReturn(mockFollowUpRequests);
 
         List<FollowUpRequest> result = requestService.getFollowUpRequest();
-        
+
         assertNotNull(result);
         assertEquals(1, result.size());
 
         verify(followUpRequestRepository).findAll();
     }
 
+    /*@Test
+    void testGetFollowUpRequestsByStatusName_Success() {
+        List<Object[]> mockResults = (List<Object[]>) List.of(new Object[]{});
 
+        when(followUpRequestRepository.findByStatusName("Pending")).thenReturn(mockResults);
+
+        List<Object[]> result = requestService.getFollowUpRequestsByStatusName("Pending");
+
+        assertNotNull(result);
+        assertEquals(1, result.size());
+
+        verify(followUpRequestRepository).findByStatusName("Pending");
+    }
+
+*/
+    @Test
+    void testCancel_Success() {
+        RequestCancel requestCancel = new RequestCancel();
+        requestCancel.setRequest(1);
+
+        Request mockRequest = new Request();
+        mockRequest.setRequestId(1);
+        mockRequest.setCreatedAt(LocalDateTime.now().minusHours(1));
+
+        RequestStatus mockRequestStatusInitial = new RequestStatus();
+        mockRequestStatusInitial.setId(1);
+        mockRequest.setStatusId(mockRequestStatusInitial);
+
+        RequestStatus mockRequestStatus = new RequestStatus();
+        mockRequestStatus.setId(4); // Estado de cancelado
+
+        // Configura el comportamiento del mock
+        when(requestRepository.findByRequestId(1)).thenReturn(Optional.of(mockRequest));
+        when(requestStatusRepository.findById(4)).thenReturn(Optional.of(mockRequestStatus));
+
+        // Llama al método que estás probando
+        RequestResponse response = requestService.cancel(requestCancel);
+
+        // Afirmaciones para verificar el comportamiento esperado
+        assertNotNull(response);
+        assertEquals("Request canceled", response.getMessage());
+
+        // Verifica que los métodos en los repositorios se llamaron como se esperaba
+        verify(requestRepository).save(any(Request.class));
+    }
+
+
+
+    @Test
+    void testCancel_InvalidRequest() {
+        RequestCancel requestCancel = new RequestCancel();
+        requestCancel.setRequest(1);
+
+        when(requestRepository.findByRequestId(1)).thenReturn(Optional.empty());
+
+        RequestResponse response = requestService.cancel(requestCancel);
+
+        assertNotNull(response);
+        assertEquals("Invalid request", response.getMessage());
+
+        verify(requestRepository, never()).save(any(Request.class));
+    }
 
 }
