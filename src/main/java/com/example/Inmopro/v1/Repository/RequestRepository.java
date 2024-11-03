@@ -30,4 +30,5 @@ public interface RequestRepository extends JpaRepository<Request, Integer> {
             "WHERE r.requestId = :requestId")
     Optional<Object[]> findRequestById(@Param("requestId") Integer requestId);
 
+    Optional<Object[]> findAllRequestsByRol(@Param(""));
 }
