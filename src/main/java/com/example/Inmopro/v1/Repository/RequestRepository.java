@@ -31,10 +31,16 @@ public interface RequestRepository extends JpaRepository<Request, Integer> {
     Optional<Object[]> findRequestById(@Param("requestId") Integer requestId);
 
     @Query("SELECT r FROM Request r " +
-            "JOIN r.tenant u " +                // Unión con el arrendatario
-            "JOIN Property p ON p.idTenant.user_id = u.user_id " + // Asegúrate de usar el nombre de la propiedad correcta
-            "JOIN p.idMonitor m " +              // Unión con el monitor usando el nombre de la propiedad
-            "WHERE m.user_id = :monitorId")      // Filtrado por el ID del monitor
+            "JOIN r.tenant u " +
+            "JOIN Property p ON p.idTenant.user_id = u.user_id " +
+            "JOIN p.idMonitor m " +
+            "WHERE m.user_id = :monitorId")
     Optional<Object[]> findAllRequestsByRol(@Param("monitorId") Integer monitorId);
 
+    @Query("SELECT r FROM Request r " +
+            "JOIN r.tenant u " +
+            "JOIN Property p ON p.idTenant.user_id = u.user_id " +
+            "JOIN p.idMonitor m " +
+            "WHERE r.requestId = :requestId AND m.user_id = :monitorId")
+    Optional<Object[]> findByIdAndMonitorId(Integer requestId, Integer monitorId);
 }

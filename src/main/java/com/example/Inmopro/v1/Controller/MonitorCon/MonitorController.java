@@ -17,21 +17,18 @@ public class MonitorController {
     @Autowired
     private MonitorService monitorService;
 
-    @GetMapping("/solicitudes/{monitorId}")
+    @GetMapping("/requests/{monitorId}")
     //@PreAuthorize("hasRole('MONITOR')")
     public ResponseEntity<Object[]> getSolicitudes(@PathVariable Integer monitorId) {
         Optional<Object[]> requests = monitorService.getAllRequestsByRol(monitorId);
-        // Lógica para obtener solicitudes
         return requests.map(ResponseEntity::ok)
                 .orElseGet(() -> ResponseEntity.notFound().build());
     }
-    /*
-    @GetMapping("requests/{requestId}")
-    public ResponseEntity<Object[]> getRequestById(@PathVariable Integer requestId) {
-        Optional<Object[]> foundRequest = requestService.getRequestById(requestId);
-        return foundRequest.map(ResponseEntity::ok)
+    @GetMapping("/requests/{requestId}/monitor/{monitorId}")
+    //@PreAuthorize("hasRole('MONITOR')")
+    public ResponseEntity<Object[]> getRequestById(@PathVariable Integer requestId, @PathVariable Integer monitorId) {
+        Optional<Object[]> requests = monitorService.getRequestByIdAndMonitorId(requestId, monitorId);
+        return requests.map(ResponseEntity::ok)
                 .orElseGet(() -> ResponseEntity.notFound().build());
     }
-*/
-    // Otros métodos protegidos para el monitor
 }

@@ -18,4 +18,8 @@ public class MonitorService {
     public Optional<Object[]> getAllRequestsByRol(Integer monitorId) {
         return requestRepository.findAllRequestsByRol(monitorId);
     }
+
+    public Optional<Object[]> getRequestByIdAndMonitorId(Integer requestId, Integer monitorId) {
+        return requestRepository.findByIdAndMonitorId(requestId, monitorId);
+    }
 }
