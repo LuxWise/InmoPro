@@ -1,6 +1,7 @@
 package com.example.Inmopro.v1.Controller.MonitorCon;
 
 import com.example.Inmopro.v1.Service.MonitorSer.MonitorService;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -13,14 +14,16 @@ import java.util.Optional;
 @RestController
 @RequestMapping("/api/monitor")
 public class MonitorController {
+    @Autowired
+    private MonitorService monitorService;
 
-    @GetMapping("/solicitudes")
+    @GetMapping("/solicitudes/{monitorId}")
     //@PreAuthorize("hasRole('MONITOR')")
-    public ResponseEntity<Object[]> getSolicitudes() {
-        Optional<Object[]> requests = MonitorService.getAllRequestsByRol();
+    public ResponseEntity<Object[]> getSolicitudes(@PathVariable Integer monitorId) {
+        Optional<Object[]> requests = monitorService.getAllRequestsByRol(monitorId);
         // Lógica para obtener solicitudes
         return requests.map(ResponseEntity::ok)
-                .orElseGet(() -> ResponseEntity.noContent().build());
+                .orElseGet(() -> ResponseEntity.notFound().build());
     }
     /*
     @GetMapping("requests/{requestId}")

@@ -156,7 +156,10 @@ public class RequestServiceTest {
 
     @Test
     void testGetFollowUpRequestsByStatusName_Success() {
-        List<Object[]> mockResults = (List<Object[]>) List.of(new Object[]{});
+        List<Object[]> mockResults = List.of(new Object[][]{
+                new Object[]{"value1", "value2"},  // Ejemplo de valores; ajusta según tus necesidades
+                new Object[]{"value3", "value4"}
+        });
 
         when(followUpRequestRepository.findByStatusName("Pending")).thenReturn(mockResults);
 
