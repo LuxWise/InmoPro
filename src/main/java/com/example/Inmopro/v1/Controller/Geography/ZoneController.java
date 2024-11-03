@@ -11,13 +11,13 @@ import org.springframework.web.bind.annotation.RestController;
 import java.util.List;
 
 @RestController
-@RequestMapping("zone")
+@RequestMapping("/api/v1/zone")
 @RequiredArgsConstructor
 public class ZoneController {
 
     private final ZoneService zoneService;
 
-    @GetMapping("/zones")
+    @GetMapping()
     public List<Zone> getZones() {
         return zoneService.getAllZones();
     }

@@ -36,9 +36,7 @@ import java.util.Optional;
 @RequiredArgsConstructor
 public class RequestService {
 
-    @Autowired
-    private ResourceLoader resourceLoader;
-
+    private final ResourceLoader resourceLoader;
     private final FollowUpRequestRepository followUpRequestRepository;
     private final RequestRepository requestRepository;
     private final JwtService jwtService;
@@ -112,13 +110,13 @@ public class RequestService {
         return RequestResponse.builder().message("Invalid request").build();
     }
 
-    public RequestResponse process(RequestProcess requestProcess, HttpServletRequest httpRequest) throws IOException, MessagingException {
+    public RequestResponse process(Integer requestProcess, HttpServletRequest httpRequest) throws IOException, MessagingException {
         String authorizationHeader = httpRequest.getHeader("Authorization");
 
         if (authorizationHeader != null || authorizationHeader.startsWith("Bared ")) {
             String token = authorizationHeader.substring(7);
             String email = jwtService.getUsernameFromToken(token);
-            Optional<Request> requestOptional = requestRepository.findByRequestId(requestProcess.getRequest());
+            Optional<Request> requestOptional = requestRepository.findByRequestId(requestProcess);
             Optional<RequestStatus> requestStatusOptional = requestStatusRepository.findById(2);
             Optional<Users> userOptional = usersRepository.findByEmail(email);
 
@@ -153,13 +151,13 @@ public class RequestService {
 
     }
 
-    public RequestResponse approve(RequestApprove requestApprove, HttpServletRequest httpRequest) throws IOException, MessagingException {
+    public RequestResponse approve(Integer requestApprove, HttpServletRequest httpRequest) throws IOException, MessagingException {
         String authorizationHeader = httpRequest.getHeader("Authorization");
 
         if (authorizationHeader != null || authorizationHeader.startsWith("Bearer ")) {
             String token = authorizationHeader.substring(7);
             String email = jwtService.getUsernameFromToken(token);
-            Optional<Request> requestOptional = requestRepository.findByRequestId(requestApprove.getRequest());
+            Optional<Request> requestOptional = requestRepository.findByRequestId(requestApprove);
             Optional<RequestStatus> requestStatusOptional = requestStatusRepository.findById(3);
             Optional<Users> userOptional = usersRepository.findByEmail(email);
 
@@ -196,8 +194,8 @@ public class RequestService {
 
     }
 
-    public RequestResponse cancel(RequestCancel requestCancel){
-        Optional<Request> requestOptional = requestRepository.findByRequestId(requestCancel.getRequest());
+    public RequestResponse cancel(Integer requestCancel){
+        Optional<Request> requestOptional = requestRepository.findByRequestId(requestCancel);
         Optional<RequestStatus> requestStatusOptional = requestStatusRepository.findById(4);
 
         if (requestOptional.isPresent() && requestStatusOptional.isPresent()) {

@@ -13,7 +13,7 @@ import java.net.URI;
 import java.util.List;
 
 @RestController
-@RequestMapping("/quadrants")
+@RequestMapping("/api/v1/quadrants")
 @RequiredArgsConstructor
 public class QuadrantController {
     private final QuadrantService quadrantService;
