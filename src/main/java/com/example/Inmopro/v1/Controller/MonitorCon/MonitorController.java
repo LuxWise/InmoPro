@@ -1,14 +1,18 @@
 package com.example.Inmopro.v1.Controller.MonitorCon;
 
+import com.example.Inmopro.v1.Controller.Request.RequestResponse;
+import com.example.Inmopro.v1.Controller.Request.ThrowingSupplier;
+import com.example.Inmopro.v1.Dto.Request.RequestMonitor;
+import com.example.Inmopro.v1.Dto.Request.RequestRequest;
 import com.example.Inmopro.v1.Service.MonitorSer.MonitorService;
+import jakarta.mail.MessagingException;
+import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
+import java.io.IOException;
 import java.util.Optional;
 
 @RestController
@@ -30,5 +34,22 @@ public class MonitorController {
         Optional<Object[]> requests = monitorService.getRequestByIdAndMonitorId(requestId, monitorId);
         return requests.map(ResponseEntity::ok)
                 .orElseGet(() -> ResponseEntity.notFound().build());
+    }
+    @PostMapping("create")
+    public ResponseEntity<RequestResponse> createRequest(@RequestBody RequestMonitor request, HttpServletRequest httpRequest) {
+        return handleRequestProcess(() -> monitorService.create(request, httpRequest));
+    }
+
+    private ResponseEntity<RequestResponse> handleRequestProcess(ThrowingSupplier<RequestResponse> supplier) {
+        try {
+            return ResponseEntity.ok(supplier.get());
+        } catch (IOException e) {
+            return ResponseEntity.status(500).body(RequestResponse.builder().message("Error to read file").build());
+        } catch (MessagingException e) {
+            return ResponseEntity.status(500).body(RequestResponse.builder().message("Error to send email").build());
+        } catch (Exception e) {
+            return ResponseEntity.status(500).body(RequestResponse.builder().message("Internal Server Error").build());
+        }
+
     }
 }
