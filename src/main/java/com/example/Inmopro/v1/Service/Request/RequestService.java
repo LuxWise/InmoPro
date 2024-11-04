@@ -1,9 +1,6 @@
 package com.example.Inmopro.v1.Service.Request;
 
 import com.example.Inmopro.v1.Controller.Request.RequestResponse;
-import com.example.Inmopro.v1.Dto.Request.RequestApprove;
-import com.example.Inmopro.v1.Dto.Request.RequestCancel;
-import com.example.Inmopro.v1.Dto.Request.RequestProcess;
 import com.example.Inmopro.v1.Dto.Request.RequestRequest;
 import com.example.Inmopro.v1.Model.Request.FollowUpRequest;
 import com.example.Inmopro.v1.Model.Request.Request;
@@ -16,7 +13,6 @@ import com.example.Inmopro.v1.Service.Mail.MailService;
 import jakarta.mail.MessagingException;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.ResourceLoader;
 import org.springframework.stereotype.Service;
@@ -24,9 +20,6 @@ import org.springframework.stereotype.Service;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -217,6 +210,40 @@ public class RequestService {
         }
 
         return RequestResponse.builder().message("Invalid request").build();
+    }
+
+    public RequestResponse onHold(Integer requestOnHold, HttpServletRequest httpRequest) throws IOException, MessagingException {
+        String authorizationHeader = httpRequest.getHeader("Authorization");
+
+            if (authorizationHeader != null || authorizationHeader.startsWith("Bearer ")) {
+                String token = authorizationHeader.substring(7);
+                String email = jwtService.getUsernameFromToken(token);
+                Optional<Request> requestOptional = requestRepository.findByRequestId(requestOnHold);
+                Optional<RequestStatus> requestStatusOptional = requestStatusRepository.findById(6);
+                Optional<Users> userOptional = usersRepository.findByEmail(email);
+
+                if (userOptional.isPresent() && requestOptional.isPresent() && requestStatusOptional.isPresent()) {
+                    Users users = userOptional.get();
+                    Request request = requestOptional.get();
+                    Integer userRole = users.getRole().getId();
+                    RequestStatus requestStatus = requestStatusOptional.get();
+
+                    if (userRole != 3) {
+                        return RequestResponse.builder().message("User invalid").build();
+                    }
+
+                    if (request.getStatusId().getId() != 1) {
+                        return RequestResponse.builder().message("Request not processed").build();
+                    }
+
+                    request.setStatusId(requestStatus);
+                    requestRepository.save(request);
+
+                    return RequestResponse.builder().message("Request on hold").build();
+                }
+                return RequestResponse.builder().message("Invalid request").build();
+            }
+            return RequestResponse.builder().message("Invalid request").build();
     }
 
     public List<FollowUpRequest> getFollowUpRequest() {

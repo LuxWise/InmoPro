@@ -53,8 +53,8 @@ public class RequestController {
     }
 
     @PatchMapping("{requestId}/onHold")
-    public ResponseEntity<RequestResponse> onHold(@PathVariable Integer requestId) {
-        return ResponseEntity.ok(requestService.cancel(requestId));
+    public ResponseEntity<RequestResponse> onHold(@PathVariable Integer requestId, HttpServletRequest httpRequest) {
+        return handleRequestProcess(() -> requestService.onHold(requestId, httpRequest));
     }
 
 
