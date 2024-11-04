@@ -121,4 +121,8 @@ public class MonitorService {
 
         return RequestResponse.builder().message("Invalid request").build();
     }
+
+    public Optional<Object[]> getAllRequestsByRolAndPending(Integer monitorId, Integer statusRequestId) {
+        return requestRepository.findAllRequestsByRolAndPending(monitorId, statusRequestId);
+    }
 }

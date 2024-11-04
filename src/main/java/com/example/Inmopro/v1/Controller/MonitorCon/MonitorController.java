@@ -39,6 +39,12 @@ public class MonitorController {
     public ResponseEntity<RequestResponse> createRequest(@RequestBody RequestMonitor request, HttpServletRequest httpRequest) {
         return handleRequestProcess(() -> monitorService.create(request, httpRequest));
     }
+    @GetMapping("/requests/{monitorId}/monitor/{statusRequestId}")
+    public ResponseEntity<Object[]> getAllRequestsByRolAndPending(@PathVariable Integer monitorId, @PathVariable Integer statusRequestId) {
+        Optional<Object[]> requests = monitorService.getRequestByIdAndMonitorId(monitorId, statusRequestId);
+        return requests.map(ResponseEntity::ok)
+                .orElseGet(() -> ResponseEntity.notFound().build());
+    }
 
     private ResponseEntity<RequestResponse> handleRequestProcess(ThrowingSupplier<RequestResponse> supplier) {
         try {
