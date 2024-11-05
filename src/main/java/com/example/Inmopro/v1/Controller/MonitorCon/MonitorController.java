@@ -20,7 +20,6 @@ public class MonitorController {
     private MonitorService monitorService;
 
     @GetMapping("/requests")
-    //@PreAuthorize("hasRole('MONITOR')")
     public Response getSolicitudes(HttpServletRequest httpRequest) {
         return monitorService.getAllRequestsByRol(httpRequest);
     }
@@ -33,7 +32,7 @@ public class MonitorController {
     public ResponseEntity<RequestResponse> createRequest(@RequestBody RequestMonitor request, HttpServletRequest httpRequest) {
         return handleRequestProcess(() -> monitorService.create(request, httpRequest));
     }
-    @GetMapping("/request/{statusRequestId}")
+    @GetMapping("/request/statusPending/{statusRequestId}")
     public ResponseEntity<Object[]> getAllRequestsByRolAndPending(@PathVariable Integer statusRequestId, HttpServletRequest httpRequest) {
         Optional<Object[]> requests = monitorService.getAllRequestsByRolAndPending(statusRequestId, httpRequest);
         return requests.map(ResponseEntity::ok)
