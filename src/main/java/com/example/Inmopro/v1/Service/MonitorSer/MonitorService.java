@@ -1,8 +1,10 @@
 package com.example.Inmopro.v1.Service.MonitorSer;
 
+import com.example.Inmopro.v1.Controller.MonitorCon.Response;
 import com.example.Inmopro.v1.Controller.Request.RequestResponse;
 import com.example.Inmopro.v1.Dto.Request.RequestMonitor;
 import com.example.Inmopro.v1.Dto.Request.RequestRequest;
+import com.example.Inmopro.v1.Exception.UnauthorizedAccessException;
 import com.example.Inmopro.v1.Model.Request.FollowUpRequest;
 import com.example.Inmopro.v1.Model.Request.Request;
 import com.example.Inmopro.v1.Model.Request.RequestStatus;
@@ -38,21 +40,66 @@ public class MonitorService {
     private final FollowUpRequestRepository followUpRequestRepository;
     private final MailService mailService;
 
-    private JwtService jwtService;
-    private UsersRepository usersRepository;
+    private final JwtService jwtService;
+    private final UsersRepository usersRepository;
 
+    private Integer isUserMonitor(HttpServletRequest httpRequest) {
+        String authorizationHeader = httpRequest.getHeader("Authorization");
+        if (authorizationHeader != null && authorizationHeader.startsWith("Bearer ")) {
+            String token = authorizationHeader.substring(7);
+            String email = jwtService.getUsernameFromToken(token);
+            Optional<Users> userOptional = usersRepository.findByEmail(email);
 
-    public Optional<Object[]> getAllRequestsByRol(Integer monitorId) {
-        return requestRepository.findAllRequestsByRol(monitorId);
+            // Si el rol no es 'Monitor', lanzamos una excepción
+            return userOptional.map(user -> {
+                if (user.getRole().getId() != 3) {
+                    throw new UnauthorizedAccessException("Acceso denegado por rol");
+                }
+                return user.getUser_id(); // Si el usuario tiene el rol adecuado, devolvemos true
+            }).orElseThrow(() -> new UnauthorizedAccessException("Usuario no encontrado"));
+        }
+        throw new UnauthorizedAccessException("Acceso denegado por rol");
     }
 
-    public Optional<Object[]> getRequestByIdAndMonitorId(Integer requestId, Integer monitorId) {
-        return requestRepository.findByIdAndMonitorId(requestId, monitorId);
+    private void checkIfUserIsMonitor(HttpServletRequest httpRequest) {
+        Integer userId = isUserMonitor(httpRequest);
     }
 
+    public Response getAllRequestsByRol(HttpServletRequest httpRequest) {
+        Integer monitorId = isUserMonitor(httpRequest);
+
+        Optional<Object[]> request = requestRepository.findAllRequestsByRol(monitorId);
+        if (request.isEmpty()) {
+            return Response.builder()
+                    .message("No se encontró la solicitud con los parámetros proporcionados.")
+                    .build();
+        }
+
+        return Response.builder()
+                .message("Solicitud encontrada.")
+                .data(request.get())
+                .build();
+    }
+
+
+    public Response getRequestById(Integer requestId, HttpServletRequest httpRequest) {
+        Integer monitorId = isUserMonitor(httpRequest);
+
+        Optional<Object[]> request = requestRepository.findByIdAndMonitorId(requestId, monitorId);
+
+        if (request.isEmpty()) {
+            return Response.builder()
+                    .message("No se encontró la solicitud con los parámetros proporcionados.")
+                    .build();
+        }
+
+        return Response.builder()
+                .message("Solicitud encontrada.")
+                .data(request.get())
+                .build();
+    }
 
     public RequestResponse create(RequestMonitor request, HttpServletRequest httpRequest) {
-
         String authorizationHeader = httpRequest.getHeader("Authorization");
 
         if (authorizationHeader != null && authorizationHeader.startsWith("Bearer ")) {
@@ -122,7 +169,8 @@ public class MonitorService {
         return RequestResponse.builder().message("Invalid request").build();
     }
 
-    public Optional<Object[]> getAllRequestsByRolAndPending(Integer monitorId, Integer statusRequestId) {
+    public Optional<Object[]> getAllRequestsByRolAndPending(Integer statusRequestId, HttpServletRequest httpRequest) {
+        Integer monitorId = isUserMonitor(httpRequest);
         return requestRepository.findAllRequestsByRolAndPending(monitorId, statusRequestId);
     }
 }
