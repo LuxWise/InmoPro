@@ -24,7 +24,7 @@ public class RequestController {
                 .orElseGet(() -> ResponseEntity.noContent().build());
     }
 
-    @GetMapping("requests/{requestId}")
+    @GetMapping("{requestId}")
     public ResponseEntity<Object[]> getRequestById(@PathVariable Integer requestId) {
         Optional<Object[]> foundRequest = requestService.getRequestById(requestId);
         return foundRequest.map(ResponseEntity::ok)

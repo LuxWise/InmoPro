@@ -104,83 +104,56 @@ public class RequestService {
     }
 
     public RequestResponse process(Integer requestProcess, HttpServletRequest httpRequest) throws IOException, MessagingException {
-        String authorizationHeader = httpRequest.getHeader("Authorization");
+        Optional<Users> userOptional = authenticateUser(httpRequest);
+        Optional<Request> requestOptional = requestRepository.findByRequestId(requestProcess);
+        Optional<RequestStatus> requestStatusOptional = requestStatusRepository.findById(2);
 
-        if (authorizationHeader != null || authorizationHeader.startsWith("Bared ")) {
-            String token = authorizationHeader.substring(7);
-            String email = jwtService.getUsernameFromToken(token);
-            Optional<Request> requestOptional = requestRepository.findByRequestId(requestProcess);
-            Optional<RequestStatus> requestStatusOptional = requestStatusRepository.findById(2);
-            Optional<Users> userOptional = usersRepository.findByEmail(email);
+        if (userOptional.isPresent() && requestOptional.isPresent() && requestStatusOptional.isPresent()) {
+            Users user = userOptional.get();
+            Request request = requestOptional.get();
+            RequestStatus newStatus = requestStatusOptional.get();
 
-            if (userOptional.isPresent() && requestOptional.isPresent() && requestStatusOptional.isPresent()) {
-                Users users = userOptional.get();
-                Request request = requestOptional.get();
-                Integer userRole = users.getRole().getId();
-                RequestStatus requestStatus = requestStatusOptional.get();
+            if (!isUserRole(user, 2)) return RequestResponse.builder().message("User invalid").build();
+            if (!isRequestStatus(request, 1)) return RequestResponse.builder().message("Request not pending").build();
 
-                if (userRole != 2) {
-                    return RequestResponse.builder().message("User invalid").build();
-                }
+            request.setStatusId(newStatus);
+            requestRepository.save(request);
 
-                if (request.getStatusId().getId() != 1) {
-                    return RequestResponse.builder().message("Request not pending").build();
-                }
-
-                request.setStatusId(requestStatus);
-                requestRepository.save(request);
-
-                Resource resource = resourceLoader.getResource("classpath:static/RequestProcessedMessage.html");
-                try (InputStream inputStream = resource.getInputStream()) {
-                    String htmlContent = new String(inputStream.readAllBytes(), StandardCharsets.UTF_8);
-                    mailService.sendHtmlEmail(users.getEmail(), "Request processed", htmlContent);
-                }
-
-                return RequestResponse.builder().message("Request processed").build();
+            Resource resource = resourceLoader.getResource("classpath:static/RequestProcessedMessage.html");
+            try (InputStream inputStream = resource.getInputStream()) {
+                String htmlContent = new String(inputStream.readAllBytes(), StandardCharsets.UTF_8);
+                mailService.sendHtmlEmail(user.getEmail(), "Request Processed", htmlContent);
             }
-            return RequestResponse.builder().message("Invalid request").build();
+
+            return RequestResponse.builder().message("Request processed").build();
         }
         return RequestResponse.builder().message("Invalid request").build();
 
     }
 
     public RequestResponse approve(Integer requestApprove, HttpServletRequest httpRequest) throws IOException, MessagingException {
-        String authorizationHeader = httpRequest.getHeader("Authorization");
+        Optional<Users> userOptional = authenticateUser(httpRequest);
+        Optional<Request> requestOptional = requestRepository.findByRequestId(requestApprove);
+        Optional<RequestStatus> requestStatusOptional = requestStatusRepository.findById(3);
 
-        if (authorizationHeader != null || authorizationHeader.startsWith("Bearer ")) {
-            String token = authorizationHeader.substring(7);
-            String email = jwtService.getUsernameFromToken(token);
-            Optional<Request> requestOptional = requestRepository.findByRequestId(requestApprove);
-            Optional<RequestStatus> requestStatusOptional = requestStatusRepository.findById(3);
-            Optional<Users> userOptional = usersRepository.findByEmail(email);
+        if (userOptional.isPresent() && requestOptional.isPresent() && requestStatusOptional.isPresent()) {
+            Users user = userOptional.get();
+            Request request = requestOptional.get();
+            RequestStatus newStatus = requestStatusOptional.get();
 
-            if (userOptional.isPresent() && requestOptional.isPresent() && requestStatusOptional.isPresent()) {
-                Users users = userOptional.get();
-                Request request = requestOptional.get();
-                Integer userRole = users.getRole().getId();
-                RequestStatus requestStatus = requestStatusOptional.get();
+            if (!isUserRole(user, 3)) return RequestResponse.builder().message("User invalid").build();
+            if (!isRequestStatus(request, 2)) return RequestResponse.builder().message("Request not processed").build();
 
-                if (userRole != 3) {
-                    return RequestResponse.builder().message("User invalid").build();
-                }
+            request.setStatusId(newStatus);
+            requestRepository.save(request);
 
-                if (request.getStatusId().getId() != 2) {
-                    return RequestResponse.builder().message("Request not processed").build();
-                }
-
-                request.setStatusId(requestStatus);
-                requestRepository.save(request);
-
-                Resource resource = resourceLoader.getResource("classpath:static/RequestApprovedMessage.html");
-                try (InputStream inputStream = resource.getInputStream()) {
-                    String htmlContent = new String(inputStream.readAllBytes(), StandardCharsets.UTF_8);
-                    mailService.sendHtmlEmail(users.getEmail(), "Request approved", htmlContent);
-                }
-
-                return RequestResponse.builder().message("Request approve").build();
+            Resource resource = resourceLoader.getResource("classpath:static/RequestApprovedMessage.html.html");
+            try (InputStream inputStream = resource.getInputStream()) {
+                String htmlContent = new String(inputStream.readAllBytes(), StandardCharsets.UTF_8);
+                mailService.sendHtmlEmail(user.getEmail(), "Request approved", htmlContent);
             }
-            return RequestResponse.builder().message("Invalid request").build();
 
+            return RequestResponse.builder().message("Request Approved").build();
         }
         return RequestResponse.builder().message("Invalid request").build();
 
@@ -213,37 +186,25 @@ public class RequestService {
     }
 
     public RequestResponse onHold(Integer requestOnHold, HttpServletRequest httpRequest) throws IOException, MessagingException {
-        String authorizationHeader = httpRequest.getHeader("Authorization");
+        Optional<Users> userOptional = authenticateUser(httpRequest);
+        Optional<Request> requestOptional = requestRepository.findByRequestId(requestOnHold);
+        Optional<RequestStatus> requestStatusOptional = requestStatusRepository.findById(6);
 
-            if (authorizationHeader != null || authorizationHeader.startsWith("Bearer ")) {
-                String token = authorizationHeader.substring(7);
-                String email = jwtService.getUsernameFromToken(token);
-                Optional<Request> requestOptional = requestRepository.findByRequestId(requestOnHold);
-                Optional<RequestStatus> requestStatusOptional = requestStatusRepository.findById(6);
-                Optional<Users> userOptional = usersRepository.findByEmail(email);
+        if (userOptional.isPresent() && requestOptional.isPresent() && requestStatusOptional.isPresent()) {
+            Users user = userOptional.get();
+            Request request = requestOptional.get();
+            RequestStatus newStatus = requestStatusOptional.get();
 
-                if (userOptional.isPresent() && requestOptional.isPresent() && requestStatusOptional.isPresent()) {
-                    Users users = userOptional.get();
-                    Request request = requestOptional.get();
-                    Integer userRole = users.getRole().getId();
-                    RequestStatus requestStatus = requestStatusOptional.get();
+            if (!isUserRole(user, 2)) return RequestResponse.builder().message("User invalid").build();
+            if (!isRequestStatus(request, 1)) return RequestResponse.builder().message("Request not processed").build();
 
-                    if (userRole != 3) {
-                        return RequestResponse.builder().message("User invalid").build();
-                    }
 
-                    if (request.getStatusId().getId() != 1) {
-                        return RequestResponse.builder().message("Request not processed").build();
-                    }
+            request.setStatusId(newStatus);
+            requestRepository.save(request);
 
-                    request.setStatusId(requestStatus);
-                    requestRepository.save(request);
-
-                    return RequestResponse.builder().message("Request on hold").build();
-                }
-                return RequestResponse.builder().message("Invalid request").build();
-            }
-            return RequestResponse.builder().message("Invalid request").build();
+            return RequestResponse.builder().message("Request on hold").build();
+        }
+        return RequestResponse.builder().message("Invalid request").build();
     }
 
     public List<FollowUpRequest> getFollowUpRequest() {
@@ -253,5 +214,25 @@ public class RequestService {
     public List<Object[]> getFollowUpRequestsByStatusName(String statusName) {
         return followUpRequestRepository.findByStatusName(statusName);
     }
+
+    private Optional<Users> authenticateUser(HttpServletRequest httpRequest) {
+        String authorizationHeader = httpRequest.getHeader("Authorization");
+        if (authorizationHeader != null && authorizationHeader.startsWith("Bearer ")) {
+            String token = authorizationHeader.substring(7);
+            String email = jwtService.getUsernameFromToken(token);
+            return usersRepository.findByEmail(email);
+        }
+        return Optional.empty();
+    }
+
+
+    private boolean isUserRole(Users user, int requiredRoleId) {
+        return user.getRole().getId() == requiredRoleId;
+    }
+
+    private boolean isRequestStatus(Request request, int statusId) {
+        return request.getStatusId().getId() == statusId;
+    }
+
 
 }
