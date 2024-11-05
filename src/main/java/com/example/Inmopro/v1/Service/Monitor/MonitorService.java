@@ -1,15 +1,13 @@
-package com.example.Inmopro.v1.Service.MonitorSer;
+package com.example.Inmopro.v1.Service.Monitor;
 
 import com.example.Inmopro.v1.Controller.MonitorCon.Response;
 import com.example.Inmopro.v1.Controller.Request.RequestResponse;
 import com.example.Inmopro.v1.Dto.Request.RequestMonitor;
-import com.example.Inmopro.v1.Dto.Request.RequestRequest;
 import com.example.Inmopro.v1.Exception.UnauthorizedAccessException;
 import com.example.Inmopro.v1.Model.Request.FollowUpRequest;
 import com.example.Inmopro.v1.Model.Request.Request;
 import com.example.Inmopro.v1.Model.Request.RequestStatus;
 import com.example.Inmopro.v1.Model.Request.RequestType;
-import com.example.Inmopro.v1.Model.Users.Roles;
 import com.example.Inmopro.v1.Model.Users.Users;
 import com.example.Inmopro.v1.Repository.*;
 import com.example.Inmopro.v1.Service.Jwt.JwtService;
@@ -17,7 +15,6 @@ import com.example.Inmopro.v1.Service.Mail.MailService;
 import jakarta.mail.MessagingException;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
-import org.apache.catalina.User;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.ResourceLoader;

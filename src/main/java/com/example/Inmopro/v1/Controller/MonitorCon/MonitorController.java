@@ -3,7 +3,7 @@ package com.example.Inmopro.v1.Controller.MonitorCon;
 import com.example.Inmopro.v1.Controller.Request.RequestResponse;
 import com.example.Inmopro.v1.Controller.Request.ThrowingSupplier;
 import com.example.Inmopro.v1.Dto.Request.RequestMonitor;
-import com.example.Inmopro.v1.Service.MonitorSer.MonitorService;
+import com.example.Inmopro.v1.Service.Monitor.MonitorService;
 import jakarta.mail.MessagingException;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.beans.factory.annotation.Autowired;

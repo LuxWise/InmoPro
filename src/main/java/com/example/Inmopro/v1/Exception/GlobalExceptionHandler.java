@@ -1,7 +1,6 @@
 package com.example.Inmopro.v1.Exception;
 
 import com.example.Inmopro.v1.Controller.MonitorCon.Response;
-import com.example.Inmopro.v1.Service.MonitorSer.MonitorService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ExceptionHandler;
