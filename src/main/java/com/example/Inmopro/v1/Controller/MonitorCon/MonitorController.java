@@ -14,7 +14,7 @@ import java.io.IOException;
 import java.util.Optional;
 
 @RestController
-@RequestMapping("/api/monitor")
+@RequestMapping("/api/v1/monitor")
 public class MonitorController {
     @Autowired
     private MonitorService monitorService;
@@ -33,10 +33,9 @@ public class MonitorController {
         return handleRequestProcess(() -> monitorService.create(request, httpRequest));
     }
     @GetMapping("/request/statusPending/{statusRequestId}")
-    public ResponseEntity<Object[]> getAllRequestsByRolAndPending(@PathVariable Integer statusRequestId, HttpServletRequest httpRequest) {
-        Optional<Object[]> requests = monitorService.getAllRequestsByRolAndPending(statusRequestId, httpRequest);
-        return requests.map(ResponseEntity::ok)
-                .orElseGet(() -> ResponseEntity.notFound().build());
+    public Response getAllRequestsByRolAndPending(@PathVariable Integer statusRequestId, HttpServletRequest httpRequest) {
+        return monitorService.getAllRequestsByRolAndPending(statusRequestId, httpRequest);
+
     }
 
     private ResponseEntity<RequestResponse> handleRequestProcess(ThrowingSupplier<RequestResponse> supplier) {

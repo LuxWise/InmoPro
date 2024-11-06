@@ -166,8 +166,19 @@ public class MonitorService {
         return RequestResponse.builder().message("Invalid request").build();
     }
 
-    public Optional<Object[]> getAllRequestsByRolAndPending(Integer statusRequestId, HttpServletRequest httpRequest) {
+    public Response getAllRequestsByRolAndPending(Integer statusRequestId, HttpServletRequest httpRequest) {
         Integer monitorId = isUserMonitor(httpRequest);
-        return requestRepository.findAllRequestsByRolAndPending(monitorId, statusRequestId);
+        Optional<Object[]> request = requestRepository.findAllRequestsByRolAndPending(monitorId, statusRequestId);
+
+        if (request.isEmpty()) {
+            return Response.builder()
+                    .message("No se encontró la solicitud con los parámetros proporcionados.")
+                    .build();
+        }
+
+        return Response.builder()
+                .message("Solicitud encontrada.")
+                .data(request.get())
+                .build();
     }
 }
