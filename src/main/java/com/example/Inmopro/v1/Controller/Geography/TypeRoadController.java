@@ -14,7 +14,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 @RestController
-@RequestMapping("typeroads")
+@RequestMapping("/api/v1/typeroads")
 @RequiredArgsConstructor
 public class TypeRoadController {
 

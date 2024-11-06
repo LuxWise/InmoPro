@@ -1,10 +1,6 @@
 package com.example.Inmopro.v1.Controller.Request;
 
-import com.example.Inmopro.v1.Dto.Request.RequestApprove;
-import com.example.Inmopro.v1.Dto.Request.RequestCancel;
-import com.example.Inmopro.v1.Dto.Request.RequestProcess;
 import com.example.Inmopro.v1.Dto.Request.RequestRequest;
-import com.example.Inmopro.v1.Model.Request.FollowUpRequest;
 import com.example.Inmopro.v1.Service.Request.RequestService;
 import jakarta.mail.MessagingException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -12,64 +8,55 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import java.io.IOException;
-import java.util.List;
 import java.util.Optional;
 
 @RestController
-@RequestMapping("/request")
+@RequestMapping("/api/v1/requests")
 @RequiredArgsConstructor
 public class RequestController {
 
     private final RequestService requestService;
 
-    @GetMapping("requests")
+    @GetMapping()
     public ResponseEntity<Object[]> getAllRequests() {
         Optional<Object[]> requests = requestService.getAllRequests();
         return requests.map(ResponseEntity::ok)
                 .orElseGet(() -> ResponseEntity.noContent().build());
     }
 
-    @GetMapping("requests/{requestId}")
+    @GetMapping("{requestId}")
     public ResponseEntity<Object[]> getRequestById(@PathVariable Integer requestId) {
         Optional<Object[]> foundRequest = requestService.getRequestById(requestId);
         return foundRequest.map(ResponseEntity::ok)
                 .orElseGet(() -> ResponseEntity.notFound().build());
     }
 
-    @PostMapping("create")
+    @PostMapping()
     public ResponseEntity<RequestResponse> createRequest(@RequestBody RequestRequest request, HttpServletRequest httpRequest) {
         return handleRequestProcess(() -> requestService.create(request, httpRequest));
     }
 
-    @PatchMapping("process")
-    public ResponseEntity<RequestResponse> processRequest(@RequestBody RequestProcess request,HttpServletRequest httpRequest) {
-        return handleRequestProcess(() -> requestService.process(request, httpRequest));
+    @PatchMapping("{requestId}/process")
+    public ResponseEntity<RequestResponse> processRequest(@PathVariable Integer requestId,HttpServletRequest httpRequest) {
+        return handleRequestProcess(() -> requestService.process(requestId, httpRequest));
     }
 
-    @PatchMapping("approve")
-    public ResponseEntity<RequestResponse> approveRequest(@RequestBody RequestApprove request, HttpServletRequest httpRequest) {
-        return handleRequestProcess(() -> requestService.approve(request, httpRequest));
+    @PatchMapping("{requestId}/approve")
+    public ResponseEntity<RequestResponse> approveRequest(@PathVariable Integer requestId, HttpServletRequest httpRequest) {
+        return handleRequestProcess(() -> requestService.approve(requestId, httpRequest));
     }
 
 
-    @PatchMapping("cancel")
-    public ResponseEntity<RequestResponse> cancel(@RequestBody RequestCancel request) {
-        return ResponseEntity.ok(requestService.cancel(request));
+    @PatchMapping("{requestId}/cancel")
+    public ResponseEntity<RequestResponse> cancel(@PathVariable Integer requestId) {
+        return ResponseEntity.ok(requestService.cancel(requestId));
     }
 
-    @GetMapping("followuprequests")
-    public ResponseEntity<List<FollowUpRequest>> getAllFollowUpRequests() {
-        return ResponseEntity.ok(requestService.getFollowUpRequest());
+    @PatchMapping("{requestId}/onHold")
+    public ResponseEntity<RequestResponse> onHold(@PathVariable Integer requestId, HttpServletRequest httpRequest) {
+        return handleRequestProcess(() -> requestService.onHold(requestId, httpRequest));
     }
 
-    @GetMapping("/followuprequests/status/{statusName}")
-    public ResponseEntity<List<Object[]>> getFollowUpRequestsByStatusName(@PathVariable String statusName) {
-        List<Object[]> followUpRequests = requestService.getFollowUpRequestsByStatusName(statusName);
-        if (followUpRequests.isEmpty()) {
-            return ResponseEntity.notFound().build();
-        }
-        return ResponseEntity.ok(followUpRequests);
-    }
 
     private ResponseEntity<RequestResponse> handleRequestProcess(ThrowingSupplier<RequestResponse> supplier) {
         try {

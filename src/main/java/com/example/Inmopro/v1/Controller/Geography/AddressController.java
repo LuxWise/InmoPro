@@ -5,23 +5,25 @@ import com.example.Inmopro.v1.Service.Geography.AddressService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import java.net.URI;
 import java.util.List;
 
 @RestController
-@RequestMapping("addresses")
+@RequestMapping("/api/v1/addresses")
 @RequiredArgsConstructor
 public class AddressController {
+
     private final AddressService addressService;
 
     @GetMapping
     public ResponseEntity<List<Address>> getAllAddresses() {
-        List<Address> Address = addressService.findAll();
-        if (Address.isEmpty()) {
+        List<Address> addresses = addressService.findAll();
+        if (addresses.isEmpty()) {
             return ResponseEntity.noContent().build();
         }
-        return ResponseEntity.ok(Address);
+        return ResponseEntity.ok(addresses);
     }
 
     @GetMapping("/{id}")
@@ -34,7 +36,10 @@ public class AddressController {
     @PostMapping
     public ResponseEntity<Address> createAddress(@RequestBody Address address) {
         Address savedAddress = addressService.save(address);
-        URI location = URI.create("/addresses/" + savedAddress.getId());
+        URI location = ServletUriComponentsBuilder.fromCurrentRequest()
+                .path("/{id}")
+                .buildAndExpand(savedAddress.getId())
+                .toUri();
         return ResponseEntity.created(location).body(savedAddress);
     }
 

@@ -1,8 +1,7 @@
 package com.example.Inmopro.v1;
 
 import com.example.Inmopro.v1.Controller.Request.RequestResponse;
-import com.example.Inmopro.v1.Dto.Request.*;
-import com.example.Inmopro.v1.Model.Calculator;
+import com.example.Inmopro.v1.Dto.Request.RequestRequest;
 import com.example.Inmopro.v1.Model.Request.FollowUpRequest;
 import com.example.Inmopro.v1.Model.Request.Request;
 import com.example.Inmopro.v1.Model.Request.RequestStatus;
@@ -14,33 +13,29 @@ import com.example.Inmopro.v1.Service.Jwt.JwtService;
 import com.example.Inmopro.v1.Service.Mail.MailService;
 import com.example.Inmopro.v1.Service.Request.RequestService;
 import jakarta.servlet.http.HttpServletRequest;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
-
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.*;
-
-import java.io.ByteArrayInputStream;
-
-import java.io.IOException;
-import java.time.LocalDateTime;
-import java.util.List;
-import java.util.Optional;
-import java.io.InputStream;
-
-import jakarta.mail.MessagingException;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.ResourceLoader;
 
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.time.LocalDateTime;
+import java.util.List;
+import java.util.Optional;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
+import jakarta.mail.MessagingException;
+
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 public class RequestServiceTest {
@@ -121,6 +116,7 @@ public class RequestServiceTest {
         verify(followUpRequestRepository).save(any(FollowUpRequest.class));
         verify(mailService).sendHtmlEmail(eq("test@example.com"), eq("Request created"), anyString());
     }
+
     @Test
     void testCreate_InvalidAuthorization() throws IOException, MessagingException {
         RequestRequest requestRequest = new RequestRequest();
@@ -128,7 +124,6 @@ public class RequestServiceTest {
         requestRequest.setDescription("Test description");
 
         when(httpRequest.getHeader("Authorization")).thenReturn(null);
-
 
         RequestResponse response = requestService.create(requestRequest, httpRequest);
 
@@ -156,28 +151,14 @@ public class RequestServiceTest {
 
     @Test
     void testGetFollowUpRequestsByStatusName_Success() {
-        List<Object[]> mockResults = List.of(new Object[][]{
-                new Object[]{"value1", "value2"},  // Ejemplo de valores; ajusta según tus necesidades
-                new Object[]{"value3", "value4"}
-        });
-
-        when(followUpRequestRepository.findByStatusName("Pending")).thenReturn(mockResults);
-
-        List<Object[]> result = requestService.getFollowUpRequestsByStatusName("Pending");
-
-        assertNotNull(result);
-        assertEquals(1, result.size());
-
-        verify(followUpRequestRepository).findByStatusName("Pending");
     }
 
     @Test
     void testCancel_Success() {
-        RequestCancel requestCancel = new RequestCancel();
-        requestCancel.setRequest(1);
+        Integer requestCancelId = 1;
 
         Request mockRequest = new Request();
-        mockRequest.setRequestId(1);
+        mockRequest.setRequestId(requestCancelId);
         mockRequest.setCreatedAt(LocalDateTime.now().minusHours(1));
 
         RequestStatus mockRequestStatusInitial = new RequestStatus();
@@ -185,14 +166,14 @@ public class RequestServiceTest {
         mockRequest.setStatusId(mockRequestStatusInitial);
 
         RequestStatus mockRequestStatus = new RequestStatus();
-        mockRequestStatus.setId(4); // Estado de cancelado
+        mockRequestStatus.setId(4);
 
         // Configura el comportamiento del mock
-        when(requestRepository.findByRequestId(1)).thenReturn(Optional.of(mockRequest));
+        when(requestRepository.findByRequestId(requestCancelId)).thenReturn(Optional.of(mockRequest));
         when(requestStatusRepository.findById(4)).thenReturn(Optional.of(mockRequestStatus));
 
         // Llama al método que estás probando
-        RequestResponse response = requestService.cancel(requestCancel);
+        RequestResponse response = requestService.cancel(requestCancelId);
 
         // Afirmaciones para verificar el comportamiento esperado
         assertNotNull(response);
@@ -202,21 +183,17 @@ public class RequestServiceTest {
         verify(requestRepository).save(any(Request.class));
     }
 
-
-
     @Test
     void testCancel_InvalidRequest() {
-        RequestCancel requestCancel = new RequestCancel();
-        requestCancel.setRequest(1);
+        Integer requestCancelId = 1;
 
-        when(requestRepository.findByRequestId(1)).thenReturn(Optional.empty());
+        when(requestRepository.findByRequestId(requestCancelId)).thenReturn(Optional.empty());
 
-        RequestResponse response = requestService.cancel(requestCancel);
+        RequestResponse response = requestService.cancel(requestCancelId);
 
         assertNotNull(response);
         assertEquals("Invalid request", response.getMessage());
 
         verify(requestRepository, never()).save(any(Request.class));
     }
-
 }

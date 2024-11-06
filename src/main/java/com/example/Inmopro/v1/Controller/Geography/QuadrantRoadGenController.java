@@ -10,7 +10,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 @RestController
-@RequestMapping("/quadrant-road-gen")
+@RequestMapping("/api/v1/quadrant-road-gen")
 @RequiredArgsConstructor
 public class QuadrantRoadGenController {
 
