@@ -9,4 +9,4 @@ vault kv put secret/application \
   dbpassword="AdminInmoProIshere1!" \
   dbuser="InmoProAdmin@inmopro" \
   emailApp="inmopro.comuniciones@gmail.com" \
-  passwordApp="zqbb xulv hfzu nvls"
+  passwordApp="zrkr kpzc objn eudk"
