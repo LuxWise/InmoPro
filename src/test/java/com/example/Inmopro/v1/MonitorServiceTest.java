@@ -62,7 +62,7 @@ public class MonitorServiceTest {
     @InjectMocks
     private MonitorService monitorService;
 
-
+    // Creacion
     @Test
     void testCreateRequestMonitor_Success() throws IOException, MessagingException {
         RequestMonitor requestMonitor = new RequestMonitor();
@@ -97,13 +97,7 @@ public class MonitorServiceTest {
         mockRequestStatus.setId(2);  // Estado en progreso
         when(requestStatusRepository.findById(2)).thenReturn(Optional.of(mockRequestStatus));
 
-        //when(requestRepository.existsByTenantAndStatusId(mockUserTenant, mockRequestStatus)).thenReturn(true);
-
-        // Mock del Resource y su InputStream
-        Resource mockResource = mock(Resource.class);
-        InputStream inputStream = new ByteArrayInputStream("Test email content".getBytes());
-        when(mockResource.getInputStream()).thenReturn(inputStream);
-        when(resourceLoader.getResource("classpath:static/RequestMessage.html")).thenReturn(mockResource);
+        when(requestRepository.existsByTenantAndStatusId(mockUserTenant, mockRequestStatus)).thenReturn(false);
 
         RequestResponse response = monitorService.create(requestMonitor, httpRequest);
 
@@ -118,5 +112,212 @@ public class MonitorServiceTest {
         verify(usersRepository).findByEmail("tenant@example.com");
         verify(requestTypeRepository).findById(1);
         verify(requestStatusRepository).findById(2);
+    }
+
+    @Test
+    void testCreateRequestMonitor_InvalidRole() throws IOException, MessagingException {
+        RequestMonitor requestMonitor = new RequestMonitor();
+        requestMonitor.setRequestType(1);
+        requestMonitor.setDescription("Test description");
+        requestMonitor.setEmail("nonOwnerOrTenant@example.com");
+
+        when(httpRequest.getHeader("Authorization")).thenReturn("Bearer test-token");
+        when(jwtService.getUsernameFromToken("test-token")).thenReturn("monitor@example.com");
+
+        Users mockUserSession = new Users();
+        Roles monitorRole = new Roles();
+        monitorRole.setId(3);  // Monitor role
+        mockUserSession.setRole(monitorRole);
+        mockUserSession.setEmail("monitor@example.com");
+
+        when(usersRepository.findByEmail("monitor@example.com")).thenReturn(Optional.of(mockUserSession));
+
+        Users mockUserInvalidRole = new Users();
+        Roles invalidRole = new Roles();
+        invalidRole.setId(4);  // Invalid role
+        mockUserInvalidRole.setRole(invalidRole);
+        mockUserInvalidRole.setEmail("nonOwnerOrTenant@example.com");
+
+        when(usersRepository.findByEmail("nonOwnerOrTenant@example.com")).thenReturn(Optional.of(mockUserInvalidRole));
+
+
+        RequestType mockRequestType = new RequestType();
+        mockRequestType.setId(1);
+        when(requestTypeRepository.findById(1)).thenReturn(Optional.of(mockRequestType));
+
+        RequestStatus mockRequestStatus = new RequestStatus();
+        mockRequestStatus.setId(2);  // Estado en progreso
+        when(requestStatusRepository.findById(2)).thenReturn(Optional.of(mockRequestStatus));
+
+
+        Resource mockResource = mock(Resource.class);
+        InputStream inputStream = new ByteArrayInputStream("Test email content".getBytes());
+
+        RequestResponse response = monitorService.create(requestMonitor, httpRequest);
+
+        assertEquals("User invalid by rol", response.getMessage());
+    }
+
+    @Test
+    void testCreateRequestMonitor_UnauthenticatedUser() throws MessagingException, IOException {
+        RequestMonitor requestMonitor = new RequestMonitor();
+
+        when(httpRequest.getHeader("Authorization")).thenReturn(null);
+
+        RequestResponse response = monitorService.create(requestMonitor, httpRequest);
+
+        assertEquals("Invalid request: missing authorization token", response.getMessage());
+    }
+
+    @Test
+    void testCreateRequestMonitor_PendingRequest() throws IOException, MessagingException {
+
+        RequestMonitor requestMonitor = new RequestMonitor();
+        requestMonitor.setRequestType(1);
+        requestMonitor.setDescription("Test description");
+        requestMonitor.setEmail("tenant@example.com");
+
+        when(httpRequest.getHeader("Authorization")).thenReturn("Bearer test-token");
+        when(jwtService.getUsernameFromToken("test-token")).thenReturn("monitor@example.com");
+
+        Users mockUserSession = new Users();
+        Roles monitorRole = new Roles();
+        monitorRole.setId(3);  // id para el rol de monitor
+        mockUserSession.setRole(monitorRole);
+        mockUserSession.setEmail("monitor@example.com");
+
+        when(usersRepository.findByEmail("monitor@example.com")).thenReturn(Optional.of(mockUserSession));
+
+        Users mockUserTenant = new Users();
+        Roles tenantRole = new Roles();
+        tenantRole.setId(1);  // id para el rol de tenant
+        mockUserTenant.setRole(tenantRole);
+        mockUserTenant.setEmail("tenant@example.com");
+
+        when(usersRepository.findByEmail("tenant@example.com")).thenReturn(Optional.of(mockUserTenant));
+
+        RequestType mockRequestType = new RequestType();
+        mockRequestType.setId(1);
+        when(requestTypeRepository.findById(1)).thenReturn(Optional.of(mockRequestType));
+
+        RequestStatus mockRequestStatus = new RequestStatus();
+        mockRequestStatus.setId(2);  // Estado en progreso
+        when(requestStatusRepository.findById(2)).thenReturn(Optional.of(mockRequestStatus));
+
+        when(requestRepository.existsByTenantAndStatusId(mockUserTenant, mockRequestStatus)).thenReturn(true);
+
+        RequestResponse response = monitorService.create(requestMonitor, httpRequest);
+
+        assertEquals("User have a pending request", response.getMessage());
+    }
+    @Test
+    void testCreateRequestMonitor_EmailTemplateError() throws IOException, MessagingException {
+        RequestMonitor requestMonitor = new RequestMonitor();
+        requestMonitor.setRequestType(1);
+        requestMonitor.setDescription("Test description");
+        requestMonitor.setEmail("tenant@example.com");
+
+        when(httpRequest.getHeader("Authorization")).thenReturn("Bearer test-token");
+        when(jwtService.getUsernameFromToken("test-token")).thenReturn("monitor@example.com");
+
+        Users mockUserSession = new Users();
+        Roles monitorRole = new Roles();
+        monitorRole.setId(3);  // id para el rol de monitor
+        mockUserSession.setRole(monitorRole);
+        mockUserSession.setEmail("monitor@example.com");
+
+        when(usersRepository.findByEmail("monitor@example.com")).thenReturn(Optional.of(mockUserSession));
+
+        Users mockUserTenant = new Users();
+        Roles tenantRole = new Roles();
+        tenantRole.setId(1);  // id para el rol de tenant
+        mockUserTenant.setRole(tenantRole);
+        mockUserTenant.setEmail("tenant@example.com");
+
+        when(usersRepository.findByEmail("tenant@example.com")).thenReturn(Optional.of(mockUserTenant));
+
+        RequestType mockRequestType = new RequestType();
+        mockRequestType.setId(1);
+        when(requestTypeRepository.findById(1)).thenReturn(Optional.of(mockRequestType));
+
+        RequestStatus mockRequestStatus = new RequestStatus();
+        mockRequestStatus.setId(2);  // Estado en progreso
+        when(requestStatusRepository.findById(2)).thenReturn(Optional.of(mockRequestStatus));
+
+        when(requestRepository.existsByTenantAndStatusId(mockUserTenant, mockRequestStatus)).thenReturn(false);
+
+        doThrow(new RuntimeException("File not found")).when(resourceLoader).getResource("classpath:static/RequestMessage.html");
+
+
+        RequestResponse response = monitorService.create(requestMonitor, httpRequest);
+
+        assertNotNull(response);
+        assertEquals("Error loading email template", response.getMessage());
+
+    }
+
+    //consultas
+    @Test
+    void testGetAllRequestsByRol_Success() {
+        String token = "test-token";
+        String email = "monitor@example.com";
+
+        when(httpRequest.getHeader("Authorization")).thenReturn("Bearer " + token);
+        when(jwtService.getUsernameFromToken(token)).thenReturn(email);
+
+        Users mockUser = new Users();
+        mockUser.setUser_id(1);
+        when(usersRepository.findByEmail(email)).thenReturn(Optional.of(mockUser));
+
+        Object[] mockRequest = new Object[]{};
+        when(requestRepository.findAllRequestsByRol(1)).thenReturn(Optional.of(mockRequest));
+
+        Response response = monitorService.getAllRequestsByRol(httpRequest);
+
+        assertNotNull(response);
+        assertEquals("Solicitud encontrada.", response.getMessage());
+        assertEquals(mockRequest, response.getData());
+
+        verify(jwtService).getUsernameFromToken(token);
+        verify(usersRepository).findByEmail(email);
+        verify(requestRepository).findAllRequestsByRol(1);
+    }
+
+    @Test
+    void testGetAllRequestsByRol_NoRequestsFound() {
+        String token = "test-token";
+        String email = "monitor@example.com";
+
+        when(httpRequest.getHeader("Authorization")).thenReturn("Bearer " + token);
+        when(jwtService.getUsernameFromToken(token)).thenReturn(email);
+
+        Users mockUser = new Users();
+        mockUser.setUser_id(1);
+        when(usersRepository.findByEmail(email)).thenReturn(Optional.of(mockUser));
+
+        when(requestRepository.findAllRequestsByRol(1)).thenReturn(Optional.empty());
+
+        Response response = monitorService.getAllRequestsByRol(httpRequest);
+
+        assertNotNull(response);
+        assertEquals("No se encontró la solicitud con los parámetros proporcionados.", response.getMessage());
+        assertNull(response.getData());
+
+        verify(jwtService).getUsernameFromToken(token);
+        verify(usersRepository).findByEmail(email);
+        verify(requestRepository).findAllRequestsByRol(1);
+    }
+
+    @Test
+    void testGetAllRequestsByRol_InvalidToken() {
+        when(httpRequest.getHeader("Authorization")).thenReturn(null);
+
+        Response response = monitorService.getAllRequestsByRol(httpRequest);
+
+        assertNotNull(response);
+        assertEquals("Invalid request: missing authorization token", response.getMessage());
+        assertNull(response.getData());
+
+        verifyNoInteractions(jwtService, usersRepository, requestRepository);
     }
 }

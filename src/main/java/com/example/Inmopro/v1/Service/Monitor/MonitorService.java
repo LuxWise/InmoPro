@@ -43,7 +43,8 @@ public class MonitorService {
     public RequestResponse create(RequestMonitor request, HttpServletRequest httpRequest) throws IOException, MessagingException {
         String authorizationHeader = httpRequest.getHeader("Authorization");
 
-        if (authorizationHeader != null && authorizationHeader.startsWith("Bearer ")) {
+        if (authorizationHeader != null && authorizationHeader.startsWith("Bearer "))
+        {
             String token = authorizationHeader.substring(7);
             String email = jwtService.getUsernameFromToken(token);
 
@@ -68,7 +69,7 @@ public class MonitorService {
 
                     boolean existsInProgressRequest = requestRepository.existsByTenantAndStatusId(userRequest, requestStatus);
                     if (existsInProgressRequest) {
-                        return RequestResponse.builder().message("You have a pending request").build();
+                        return RequestResponse.builder().message("User have a pending request").build();
                     }
 
                     Request requestEntity = Request.builder()
@@ -87,11 +88,15 @@ public class MonitorService {
                             .build();
 
                     followUpRequestRepository.save(followUpRequest);
-                    Resource resource = resourceLoader.getResource("classpath:static/RequestMessage.html");
-                    try (InputStream inputStream = resource.getInputStream()) {
-                        String htmlContent = new String(inputStream.readAllBytes(), StandardCharsets.UTF_8);
-                        mailService.sendHtmlEmail(emailRequest, "Request created", htmlContent);
-                    } catch (IOException e) {
+                    try {
+                        Resource resource = resourceLoader.getResource("classpath:static/RequestMessage.html");
+                        try (InputStream inputStream = resource.getInputStream()) {
+                            String htmlContent = new String(inputStream.readAllBytes(), StandardCharsets.UTF_8);
+                            mailService.sendHtmlEmail(emailRequest, "Request created", htmlContent);
+                        } catch (IOException e) {
+                            return RequestResponse.builder().message("Error loading email template").build();
+                        }
+                    } catch (RuntimeException e) {
                         return RequestResponse.builder().message("Error loading email template").build();
                     }
 
@@ -99,7 +104,7 @@ public class MonitorService {
 
 
                 }else {
-                    return RequestResponse.builder().message("User invalid").build();
+                    return RequestResponse.builder().message("User invalid by rol").build();
                 }
 
             }
@@ -133,53 +138,83 @@ public class MonitorService {
     }
 
     public Response getAllRequestsByRol(HttpServletRequest httpRequest) {
-        Integer monitorId = isUserMonitor(httpRequest);
+        String authorizationHeader = httpRequest.getHeader("Authorization");
 
-        Optional<Object[]> request = requestRepository.findAllRequestsByRol(monitorId);
-        if (request.isEmpty()) {
+        if (authorizationHeader != null && authorizationHeader.startsWith("Bearer ")) {
+            String token = authorizationHeader.substring(7);
+            String email = jwtService.getUsernameFromToken(token);
+
+            Optional<Users> userOptionalToken = usersRepository.findByEmail(email);
+            Integer monitorId = userOptionalToken.get().getUser_id();
+            //Integer monitorId = isUserMonitor(httpRequest);
+
+            Optional<Object[]> request = requestRepository.findAllRequestsByRol(monitorId);
+            if (request.isEmpty()) {
+                return Response.builder()
+                        .message("No se encontró la solicitud con los parámetros proporcionados.")
+                        .build();
+            }
+
             return Response.builder()
-                    .message("No se encontró la solicitud con los parámetros proporcionados.")
+                    .message("Solicitud encontrada.")
+                    .data(request.get())
                     .build();
         }
-
-        return Response.builder()
-                .message("Solicitud encontrada.")
-                .data(request.get())
-                .build();
+        return Response.builder().message("Invalid request: missing authorization token").build();
     }
 
 
     public Response getRequestById(Integer requestId, HttpServletRequest httpRequest) {
-        Integer monitorId = isUserMonitor(httpRequest);
+        String authorizationHeader = httpRequest.getHeader("Authorization");
 
-        Optional<Object[]> request = requestRepository.findByIdAndMonitorId(requestId, monitorId);
+        if (authorizationHeader != null && authorizationHeader.startsWith("Bearer ")) {
+            String token = authorizationHeader.substring(7);
+            String email = jwtService.getUsernameFromToken(token);
 
-        if (request.isEmpty()) {
+            Optional<Users> userOptionalToken = usersRepository.findByEmail(email);
+            Integer monitorId = userOptionalToken.get().getUser_id();
+            //Integer monitorId = isUserMonitor(httpRequest);
+
+            Optional<Object[]> request = requestRepository.findByIdAndMonitorId(requestId, monitorId);
+
+            if (request.isEmpty()) {
+                return Response.builder()
+                        .message("No se encontró la solicitud con los parámetros proporcionados.")
+                        .build();
+            }
+
             return Response.builder()
-                    .message("No se encontró la solicitud con los parámetros proporcionados.")
+                    .message("Solicitud encontrada.")
+                    .data(request.get())
                     .build();
         }
-
-        return Response.builder()
-                .message("Solicitud encontrada.")
-                .data(request.get())
-                .build();
+        return Response.builder().message("Invalid request: missing authorization token").build();
     }
 
 
     public Response getAllRequestsByRolAndPending(Integer statusRequestId, HttpServletRequest httpRequest) {
-        Integer monitorId = isUserMonitor(httpRequest);
-        Optional<Object[]> request = requestRepository.findAllRequestsByRolAndPending(monitorId, statusRequestId);
+        String authorizationHeader = httpRequest.getHeader("Authorization");
 
-        if (request.isEmpty()) {
+        if (authorizationHeader != null && authorizationHeader.startsWith("Bearer ")) {
+            String token = authorizationHeader.substring(7);
+            String email = jwtService.getUsernameFromToken(token);
+
+            Optional<Users> userOptionalToken = usersRepository.findByEmail(email);
+            Integer monitorId = userOptionalToken.get().getUser_id();
+            //Integer monitorId = isUserMonitor(httpRequest);
+            Optional<Object[]> request = requestRepository.findAllRequestsByRolAndPending(monitorId, statusRequestId);
+
+            if (request.isEmpty()) {
+                return Response.builder()
+                        .message("No se encontró la solicitud con los parámetros proporcionados.")
+                        .build();
+            }
+
             return Response.builder()
-                    .message("No se encontró la solicitud con los parámetros proporcionados.")
+                    .message("Solicitud encontrada.")
+                    .data(request.get())
                     .build();
         }
-
-        return Response.builder()
-                .message("Solicitud encontrada.")
-                .data(request.get())
-                .build();
+        return Response.builder().message("Invalid request: missing authorization token").build();
     }
 }
