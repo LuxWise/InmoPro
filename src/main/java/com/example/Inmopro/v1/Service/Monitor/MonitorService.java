@@ -29,8 +29,8 @@ import java.util.Optional;
 @Service
 @RequiredArgsConstructor
 public class MonitorService {
-    @Autowired
-    private  RequestRepository requestRepository;
+
+    private final RequestRepository requestRepository;
     private final ResourceLoader resourceLoader;
     private final RequestTypeRepository requestTypeRepository;
     private final RequestStatusRepository requestStatusRepository;
@@ -39,6 +39,76 @@ public class MonitorService {
 
     private final JwtService jwtService;
     private final UsersRepository usersRepository;
+
+    public RequestResponse create(RequestMonitor request, HttpServletRequest httpRequest) throws IOException, MessagingException {
+        String authorizationHeader = httpRequest.getHeader("Authorization");
+
+        if (authorizationHeader != null && authorizationHeader.startsWith("Bearer ")) {
+            String token = authorizationHeader.substring(7);
+            String email = jwtService.getUsernameFromToken(token);
+
+            Optional<Users> userOptionalToken = usersRepository.findByEmail(email);
+            Optional<RequestType> requestTypeOptional = requestTypeRepository.findById(request.getRequestType());
+            Optional<RequestStatus> requestStatusOptional = requestStatusRepository.findById(2);
+
+            Optional<Users> userOptionalClient = usersRepository.findByEmail(request.getEmail());
+
+
+            if(userOptionalToken.isPresent() && requestTypeOptional.isPresent() && requestStatusOptional.isPresent() && userOptionalClient.isPresent()) {
+                Users userRequest = userOptionalClient.get();// owner or tenant
+                Integer rolUser = userRequest.getRole().getId();
+                String emailRequest = userOptionalClient.get().getEmail();
+
+                //Integer userSessionRequestMonitor = userOptionalToken.get().getRole().getId();
+
+
+                if (rolUser == 1 || rolUser == 2) { //validar la sesion del usuario o implentar esto en este userSessionRequestMonitor == 3
+                    RequestType requestType = requestTypeOptional.get();
+                    RequestStatus requestStatus = requestStatusOptional.get();
+
+                    boolean existsInProgressRequest = requestRepository.existsByTenantAndStatusId(userRequest, requestStatus);
+                    if (existsInProgressRequest) {
+                        return RequestResponse.builder().message("You have a pending request").build();
+                    }
+
+                    Request requestEntity = Request.builder()
+                            .tenant(userRequest)
+                            .requestTypeId(requestType)
+                            .statusId(requestStatus)
+                            .description(request.getDescription())
+                            .build();
+
+                    requestRepository.save(requestEntity);
+
+                    FollowUpRequest followUpRequest = FollowUpRequest.builder()
+                            .requestId(requestEntity)
+                            .statusId(requestStatus)
+                            .inForce(true)
+                            .build();
+
+                    followUpRequestRepository.save(followUpRequest);
+                    Resource resource = resourceLoader.getResource("classpath:static/RequestMessage.html");
+                    try (InputStream inputStream = resource.getInputStream()) {
+                        String htmlContent = new String(inputStream.readAllBytes(), StandardCharsets.UTF_8);
+                        mailService.sendHtmlEmail(emailRequest, "Request created", htmlContent);
+                    } catch (IOException e) {
+                        return RequestResponse.builder().message("Error loading email template").build();
+                    }
+
+                    return RequestResponse.builder().message("Request created").build();
+
+
+                }else {
+                    return RequestResponse.builder().message("User invalid").build();
+                }
+
+            }
+
+        }
+
+        return RequestResponse.builder().message("Invalid request: missing authorization token").build();
+    }
+
 
     private Integer isUserMonitor(HttpServletRequest httpRequest) {
         String authorizationHeader = httpRequest.getHeader("Authorization");
@@ -96,75 +166,6 @@ public class MonitorService {
                 .build();
     }
 
-    public RequestResponse create(RequestMonitor request, HttpServletRequest httpRequest) {
-        String authorizationHeader = httpRequest.getHeader("Authorization");
-
-        if (authorizationHeader != null && authorizationHeader.startsWith("Bearer ")) {
-            String token = authorizationHeader.substring(7);
-            String email = jwtService.getUsernameFromToken(token);
-            Optional<Users> userOptional = usersRepository.findByEmail(email);
-            Optional<RequestType> requestTypeOptional = requestTypeRepository.findById(request.getRequestType());
-            Optional<RequestStatus> requestStatusOptional = requestStatusRepository.findById(2);
-            Optional<Users> UserOptionalId = usersRepository.findById(request.getIdUser());
-
-
-            if(userOptional.isPresent() && requestTypeOptional.isPresent() && requestStatusOptional.isPresent() && UserOptionalId.isPresent()) {
-                Users userSession = userOptional.get();
-                Integer userRoleSession = userSession.getRole().getId();
-                String emailRequest = userSession.getEmail();
-
-                Users userRequest = userOptional.get();
-                //Integer userRole = userSession.getRole().getId();
-
-                if (userRoleSession == 3){
-                    RequestType requestType = requestTypeOptional.get();
-                    RequestStatus requestStatus = requestStatusOptional.get();
-
-                    boolean existsInProgressRequest = requestRepository.existsByTenantAndStatusId(userRequest, requestStatus);
-                    if (existsInProgressRequest) {
-                        return RequestResponse.builder().message("You have a pending request").build();
-                    }
-
-                    Request requestEntity = Request.builder()
-                            .tenant(userRequest)
-                            .requestTypeId(requestType)
-                            .statusId(requestStatus)
-                            .description(request.getDescription())
-                            .build();
-
-                    requestRepository.save(requestEntity);
-
-                    FollowUpRequest followUpRequest = FollowUpRequest.builder()
-                            .requestId(requestEntity)
-                            .statusId(requestStatus)
-                            .inForce(true)
-                            .build();
-
-                    followUpRequestRepository.save(followUpRequest);
-
-                    Resource resource = resourceLoader.getResource("classpath:static/RequestMessage.html");
-                    try (InputStream inputStream = resource.getInputStream()) {
-                        String htmlContent = new String(inputStream.readAllBytes(), StandardCharsets.UTF_8);
-                        mailService.sendHtmlEmail(emailRequest, "Request created", htmlContent);
-                    }catch (IOException e) {
-                        e.printStackTrace();
-                        return RequestResponse.builder().message("Error loading email template").build();
-                    } catch (MessagingException e) {
-                        throw new RuntimeException(e);
-                    }
-
-                    return RequestResponse.builder().message("Request created").build();
-
-
-                }else {
-                        return RequestResponse.builder().message("User invalid").build();
-                }
-
-            }
-        }
-
-        return RequestResponse.builder().message("Invalid request").build();
-    }
 
     public Response getAllRequestsByRolAndPending(Integer statusRequestId, HttpServletRequest httpRequest) {
         Integer monitorId = isUserMonitor(httpRequest);
