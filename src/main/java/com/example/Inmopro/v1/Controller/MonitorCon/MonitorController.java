@@ -22,7 +22,7 @@ import java.io.IOException;
 import java.util.Optional;
 
 @RestController
-@RequestMapping("/api/monitor")
+@RequestMapping("/api/v1/monitor/request")
 @RequiredArgsConstructor
 public class MonitorController {
     private final MonitorService monitorService;
@@ -33,7 +33,7 @@ public class MonitorController {
                     content = @Content(schema = @Schema(implementation = RequestRequest.class))),
             @ApiResponse(responseCode = "404", description = "No se encontraron solicitudes")
     })
-    @GetMapping("/requests")
+    @GetMapping()
     public MonitorResponse getSolicitudes(HttpServletRequest httpRequest) {
         return monitorService.getAllRequestsByRol(httpRequest);
     }
@@ -45,7 +45,7 @@ public class MonitorController {
                     content = @Content(schema = @Schema(implementation = RequestRequest.class))),
             @ApiResponse(responseCode = "404", description = "Solicitud no encontrada")
     })
-    @GetMapping("/requests/{requestId}")
+    @GetMapping("/{requestId}")
     public MonitorResponse getRequestById(@PathVariable Integer requestId, HttpServletRequest httpRequest) {
         return monitorService.getRequestById(requestId, httpRequest);
     }
@@ -56,7 +56,7 @@ public class MonitorController {
                     content = @Content(schema = @Schema(implementation = RequestRequest.class))),
             @ApiResponse(responseCode = "500", description = "Error interno del servidor")
     })
-    @PostMapping("create")
+    @PostMapping()
     public ResponseEntity<RequestResponse> createRequest(@RequestBody RequestMonitor request, HttpServletRequest httpRequest) {
         return handleRequestProcess(() -> monitorService.create(request, httpRequest));
     }
@@ -68,11 +68,20 @@ public class MonitorController {
                     content = @Content(schema = @Schema(implementation = RequestRequest.class))),
             @ApiResponse(responseCode = "404", description = "No se encontraron solicitudes pendientes con el estado especificado")
     })
-    @GetMapping("/request/statusPending/{statusRequestId}")
-    public ResponseEntity<Object[]> getAllRequestsByRolAndPending(@PathVariable Integer statusRequestId, HttpServletRequest httpRequest) {
-        Optional<Object[]> requests = monitorService.getAllRequestsByRolAndPending(statusRequestId, httpRequest);
-        return requests.map(ResponseEntity::ok)
-                .orElseGet(() -> ResponseEntity.notFound().build());
+    @GetMapping("/statusPending/{statusRequestId}")
+    public MonitorResponse getAllRequestsByRolAndPending(@PathVariable Integer statusRequestId, HttpServletRequest httpRequest) {
+        return monitorService.getAllRequestsByRolAndPending(statusRequestId, httpRequest);
+    }
+    @Operation(summary = "Cambiar de estado las solicitudes pendientes ")
+    @Parameter(name = "requestId", description = "ID del estado de la solicitud pendiente para cambio a procesado", required = true)
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Solicitudes encontradas",
+                    content = @Content(schema = @Schema(implementation = RequestRequest.class))),
+            @ApiResponse(responseCode = "404", description = "No se encontraron solicitudes pendientes con el estado especificado")
+    })
+    @PatchMapping("{requestId}/process")
+    public ResponseEntity<RequestResponse> processRequest(@PathVariable Integer requestId,HttpServletRequest httpRequest) {
+        return handleRequestProcess(() -> monitorService.process(requestId, httpRequest));
     }
 
     private ResponseEntity<RequestResponse> handleRequestProcess(ThrowingSupplier<RequestResponse> supplier) {

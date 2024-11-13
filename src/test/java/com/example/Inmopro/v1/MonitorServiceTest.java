@@ -2,7 +2,7 @@ package com.example.Inmopro.v1;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
-import com.example.Inmopro.v1.Controller.MonitorCon.Response;
+import com.example.Inmopro.v1.Controller.MonitorCon.MonitorResponse;
 import com.example.Inmopro.v1.Controller.Request.RequestResponse;
 import com.example.Inmopro.v1.Dto.Request.RequestMonitor;
 import com.example.Inmopro.v1.Dto.Request.RequestRequest;
@@ -280,7 +280,7 @@ public class MonitorServiceTest {
         Object[] mockRequest = new Object[]{};
         when(requestRepository.findAllRequestsByRol(1)).thenReturn(Optional.of(mockRequest));
 
-        Response response = monitorService.getAllRequestsByRol(httpRequest);
+        MonitorResponse response = monitorService.getAllRequestsByRol(httpRequest);
 
         assertNotNull(response);
         assertEquals("Solicitud encontrada.", response.getMessage());
@@ -305,7 +305,7 @@ public class MonitorServiceTest {
 
         when(requestRepository.findAllRequestsByRol(1)).thenReturn(Optional.empty());
 
-        Response response = monitorService.getAllRequestsByRol(httpRequest);
+        MonitorResponse response = monitorService.getAllRequestsByRol(httpRequest);
 
         assertNotNull(response);
         assertEquals("No se encontró la solicitud con los parámetros proporcionados.", response.getMessage());
@@ -320,7 +320,7 @@ public class MonitorServiceTest {
     void testGetAllRequestsByRol_InvalidToken() {
         when(httpRequest.getHeader("Authorization")).thenReturn(null);
 
-        Response response = monitorService.getAllRequestsByRol(httpRequest);
+        MonitorResponse response = monitorService.getAllRequestsByRol(httpRequest);
 
         assertNotNull(response);
         assertEquals("Invalid request: missing authorization token", response.getMessage());
@@ -347,7 +347,7 @@ public class MonitorServiceTest {
         Object[] mockRequest = new Object[]{/* Datos simulados */};
         when(requestRepository.findByIdAndMonitorId(requestId, 1)).thenReturn(Optional.of(mockRequest));
 
-        Response response = monitorService.getRequestById(requestId, httpRequest);
+        MonitorResponse response = monitorService.getRequestById(requestId, httpRequest);
 
         assertNotNull(response);
         assertEquals("Solicitud encontrada.", response.getMessage());
@@ -373,7 +373,7 @@ public class MonitorServiceTest {
 
         when(requestRepository.findByIdAndMonitorId(requestId, 1)).thenReturn(Optional.empty());
 
-        Response response = monitorService.getRequestById(requestId, httpRequest);
+        MonitorResponse response = monitorService.getRequestById(requestId, httpRequest);
 
         assertNotNull(response);
         assertEquals("No se encontró la solicitud con los parámetros proporcionados.", response.getMessage());
@@ -384,7 +384,7 @@ public class MonitorServiceTest {
     void testGetRequestById_InvalidToken() {
         when(httpRequest.getHeader("Authorization")).thenReturn(null);
 
-        Response response = monitorService.getRequestById(1, httpRequest);
+        MonitorResponse response = monitorService.getRequestById(1, httpRequest);
 
         assertNotNull(response);
         assertEquals("Invalid request: missing authorization token", response.getMessage());
@@ -408,7 +408,7 @@ public class MonitorServiceTest {
         Object[] mockRequest = new Object[]{/* Datos simulados */};
         when(requestRepository.findAllRequestsByRolAndPending(1, statusRequestId)).thenReturn(Optional.of(mockRequest));
 
-        Response response = monitorService.getAllRequestsByRolAndPending(statusRequestId, httpRequest);
+        MonitorResponse response = monitorService.getAllRequestsByRolAndPending(statusRequestId, httpRequest);
 
         assertNotNull(response);
         assertEquals("Solicitud encontrada.", response.getMessage());
@@ -434,7 +434,7 @@ public class MonitorServiceTest {
 
         when(requestRepository.findAllRequestsByRolAndPending(1, statusRequestId)).thenReturn(Optional.empty());
 
-        Response response = monitorService.getAllRequestsByRolAndPending(statusRequestId, httpRequest);
+        MonitorResponse response = monitorService.getAllRequestsByRolAndPending(statusRequestId, httpRequest);
 
         assertNotNull(response);
         assertEquals("No se encontró la solicitud con los parámetros proporcionados.", response.getMessage());
@@ -445,7 +445,7 @@ public class MonitorServiceTest {
     void testGetAllRequestsByRolAndPending_InvalidToken() {
         when(httpRequest.getHeader("Authorization")).thenReturn(null);
 
-        Response response = monitorService.getAllRequestsByRolAndPending(2, httpRequest);
+        MonitorResponse response = monitorService.getAllRequestsByRolAndPending(2, httpRequest);
 
         assertNotNull(response);
         assertEquals("Invalid request: missing authorization token", response.getMessage());

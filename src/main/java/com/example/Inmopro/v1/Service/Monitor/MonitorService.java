@@ -140,42 +140,7 @@ public class MonitorService {
         Integer userId = isUserMonitor(httpRequest);
     }
 
-    public Response getAllRequestsByRol(HttpServletRequest httpRequest) {
     public MonitorResponse getAllRequestsByRol(HttpServletRequest httpRequest) {
-        Integer monitorId = isUserMonitor(httpRequest);
-
-        Optional<Object[]> request = requestRepository.findAllRequestsByRol(monitorId);
-        if (request.isEmpty()) {
-            return MonitorResponse.builder()
-                    .message("No se encontró la solicitud con los parámetros proporcionados.")
-                    .build();
-        }
-
-        return MonitorResponse.builder()
-                .message("Solicitud encontrada.")
-                .data(request.get())
-                .build();
-    }
-
-
-    public MonitorResponse getRequestById(Integer requestId, HttpServletRequest httpRequest) {
-        Integer monitorId = isUserMonitor(httpRequest);
-
-        Optional<Object[]> request = requestRepository.findByIdAndMonitorId(requestId, monitorId);
-
-        if (request.isEmpty()) {
-            return MonitorResponse.builder()
-                    .message("No se encontró la solicitud con los parámetros proporcionados.")
-                    .build();
-        }
-
-        return MonitorResponse.builder()
-                .message("Solicitud encontrada.")
-                .data(request.get())
-                .build();
-    }
-
-    public RequestResponse create(RequestMonitor request, HttpServletRequest httpRequest) {
         String authorizationHeader = httpRequest.getHeader("Authorization");
 
         if (authorizationHeader != null && authorizationHeader.startsWith("Bearer ")) {
@@ -188,21 +153,21 @@ public class MonitorService {
 
             Optional<Object[]> request = requestRepository.findAllRequestsByRol(monitorId);
             if (request.isEmpty()) {
-                return Response.builder()
+                return MonitorResponse.builder()
                         .message("No se encontró la solicitud con los parámetros proporcionados.")
                         .build();
             }
 
-            return Response.builder()
+            return MonitorResponse.builder()
                     .message("Solicitud encontrada.")
                     .data(request.get())
                     .build();
         }
-        return Response.builder().message("Invalid request: missing authorization token").build();
+        return MonitorResponse.builder().message("Invalid request: missing authorization token").build();
     }
 
 
-    public Response getRequestById(Integer requestId, HttpServletRequest httpRequest) {
+    public MonitorResponse getRequestById(Integer requestId, HttpServletRequest httpRequest) {
         String authorizationHeader = httpRequest.getHeader("Authorization");
 
         if (authorizationHeader != null && authorizationHeader.startsWith("Bearer ")) {
@@ -216,21 +181,21 @@ public class MonitorService {
             Optional<Object[]> request = requestRepository.findByIdAndMonitorId(requestId, monitorId);
 
             if (request.isEmpty()) {
-                return Response.builder()
+                return MonitorResponse.builder()
                         .message("No se encontró la solicitud con los parámetros proporcionados.")
                         .build();
             }
 
-            return Response.builder()
+            return MonitorResponse.builder()
                     .message("Solicitud encontrada.")
                     .data(request.get())
                     .build();
         }
-        return Response.builder().message("Invalid request: missing authorization token").build();
+        return MonitorResponse.builder().message("Invalid request: missing authorization token").build();
     }
 
 
-    public Response getAllRequestsByRolAndPending(Integer statusRequestId, HttpServletRequest httpRequest) {
+    public MonitorResponse getAllRequestsByRolAndPending(Integer statusRequestId, HttpServletRequest httpRequest) {
         String authorizationHeader = httpRequest.getHeader("Authorization");
 
         if (authorizationHeader != null && authorizationHeader.startsWith("Bearer ")) {
@@ -243,17 +208,17 @@ public class MonitorService {
             Optional<Object[]> request = requestRepository.findAllRequestsByRolAndPending(monitorId, statusRequestId);
 
             if (request.isEmpty()) {
-                return Response.builder()
+                return MonitorResponse.builder()
                         .message("No se encontró la solicitud con los parámetros proporcionados.")
                         .build();
             }
 
-            return Response.builder()
+            return MonitorResponse.builder()
                     .message("Solicitud encontrada.")
                     .data(request.get())
                     .build();
         }
-        return Response.builder().message("Invalid request: missing authorization token").build();
+        return MonitorResponse.builder().message("Invalid request: missing authorization token").build();
     }
 
     public RequestResponse process(Integer requestId, HttpServletRequest httpRequest) throws MessagingException, IOException {
