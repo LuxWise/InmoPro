@@ -271,6 +271,18 @@ public class MonitorService {
             return RequestResponse.builder().message("Request is already in the desired status").build();
         }
 
+        // Verificar si la solicitud es diferente a un status que no puede ser modificado
+        if (request.getStatusId().getId() == 3 ) {
+            return RequestResponse.builder().message("Request is already approve").build();
+        }
+        if(request.getStatusId().getId() == 4){
+            return RequestResponse.builder().message("Request is already cancelled").build();
+        }
+        if(request.getStatusId().getId() == 5){
+            return RequestResponse.builder().message("Request is already complete").build();
+        }
+
+
         Optional<RequestStatus> requestStatusOptional = requestStatusRepository.findById(newStatusId);
         if (requestStatusOptional.isEmpty()) {
             return RequestResponse.builder().message("Request status not found").build();
