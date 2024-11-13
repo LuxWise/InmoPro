@@ -1,6 +1,6 @@
 package com.example.Inmopro.v1.Service.Monitor;
 
-import com.example.Inmopro.v1.Controller.MonitorCon.Response;
+import com.example.Inmopro.v1.Controller.MonitorCon.MonitorResponse;
 import com.example.Inmopro.v1.Controller.Request.RequestResponse;
 import com.example.Inmopro.v1.Dto.Request.RequestMonitor;
 import com.example.Inmopro.v1.Exception.UnauthorizedAccessException;
@@ -141,6 +141,41 @@ public class MonitorService {
     }
 
     public Response getAllRequestsByRol(HttpServletRequest httpRequest) {
+    public MonitorResponse getAllRequestsByRol(HttpServletRequest httpRequest) {
+        Integer monitorId = isUserMonitor(httpRequest);
+
+        Optional<Object[]> request = requestRepository.findAllRequestsByRol(monitorId);
+        if (request.isEmpty()) {
+            return MonitorResponse.builder()
+                    .message("No se encontró la solicitud con los parámetros proporcionados.")
+                    .build();
+        }
+
+        return MonitorResponse.builder()
+                .message("Solicitud encontrada.")
+                .data(request.get())
+                .build();
+    }
+
+
+    public MonitorResponse getRequestById(Integer requestId, HttpServletRequest httpRequest) {
+        Integer monitorId = isUserMonitor(httpRequest);
+
+        Optional<Object[]> request = requestRepository.findByIdAndMonitorId(requestId, monitorId);
+
+        if (request.isEmpty()) {
+            return MonitorResponse.builder()
+                    .message("No se encontró la solicitud con los parámetros proporcionados.")
+                    .build();
+        }
+
+        return MonitorResponse.builder()
+                .message("Solicitud encontrada.")
+                .data(request.get())
+                .build();
+    }
+
+    public RequestResponse create(RequestMonitor request, HttpServletRequest httpRequest) {
         String authorizationHeader = httpRequest.getHeader("Authorization");
 
         if (authorizationHeader != null && authorizationHeader.startsWith("Bearer ")) {

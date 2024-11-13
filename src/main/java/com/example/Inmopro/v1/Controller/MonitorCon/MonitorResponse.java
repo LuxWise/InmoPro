@@ -1,6 +1,6 @@
 package com.example.Inmopro.v1.Controller.MonitorCon;
 
-public class Response {
+public class MonitorResponse {
     private String message;
     private Object data;  // Puedes ajustar el tipo según lo que devuelvas
     private boolean success;
@@ -29,7 +29,7 @@ public class Response {
         this.success = success;
     }
 
-    public Response() {
+    public MonitorResponse() {
     }
 
     public static ResponseBuilder builder() {
@@ -56,8 +56,8 @@ public class Response {
             return this;
         }
 
-        public Response build() {
-            Response response = new Response();
+        public MonitorResponse build() {
+            MonitorResponse response = new MonitorResponse();
             response.message = this.message;
             response.data = this.data;
             response.success = this.success;
