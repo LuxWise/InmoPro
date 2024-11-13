@@ -99,10 +99,18 @@ public class MonitorServiceTest {
 
         when(requestRepository.existsByTenantAndStatusId(mockUserTenant, mockRequestStatus)).thenReturn(false);
 
+        Resource mockResource = mock(Resource.class);
+        when(resourceLoader.getResource("classpath:static/RequestMessage.html")).thenReturn(mockResource);
+        when(mockResource.exists()).thenReturn(true);  // El recurso existe
+        when(mockResource.getInputStream()).thenReturn(new ByteArrayInputStream("<html>Success</html>".getBytes())); // Simulamos que podemos leerlo correctamente
+
+        // Simulando que se envía el correo
+        doNothing().when(mailService).sendHtmlEmail(anyString(), anyString(), anyString());
+
         RequestResponse response = monitorService.create(requestMonitor, httpRequest);
 
         assertNotNull(response);
-        assertEquals("Request created", response.getMessage());
+        assertEquals("Request created", response.getMessage());  // Mensaje esperado cuando la solicitud se crea correctamente
 
         verify(requestRepository).save(any(Request.class));
         verify(followUpRequestRepository).save(any(FollowUpRequest.class));
@@ -256,7 +264,7 @@ public class MonitorServiceTest {
 
     }
 
-    //consultas
+    //consultas_propias del rol
     @Test
     void testGetAllRequestsByRol_Success() {
         String token = "test-token";
@@ -320,4 +328,131 @@ public class MonitorServiceTest {
 
         verifyNoInteractions(jwtService, usersRepository, requestRepository);
     }
+
+    //consultas propias del rol por solicitud
+
+    @Test
+    void testGetRequestById_Success() {
+        String token = "test-token";
+        String email = "monitor@example.com";
+        Integer requestId = 1;
+
+        when(httpRequest.getHeader("Authorization")).thenReturn("Bearer " + token);
+        when(jwtService.getUsernameFromToken(token)).thenReturn(email);
+
+        Users mockUser = new Users();
+        mockUser.setUser_id(1);
+        when(usersRepository.findByEmail(email)).thenReturn(Optional.of(mockUser));
+
+        Object[] mockRequest = new Object[]{/* Datos simulados */};
+        when(requestRepository.findByIdAndMonitorId(requestId, 1)).thenReturn(Optional.of(mockRequest));
+
+        Response response = monitorService.getRequestById(requestId, httpRequest);
+
+        assertNotNull(response);
+        assertEquals("Solicitud encontrada.", response.getMessage());
+        assertEquals(mockRequest, response.getData());
+
+        verify(jwtService).getUsernameFromToken(token);
+        verify(usersRepository).findByEmail(email);
+        verify(requestRepository).findByIdAndMonitorId(requestId, 1);
+    }
+
+    @Test
+    void testGetRequestById_NoRequestFound() {
+        String token = "test-token";
+        String email = "monitor@example.com";
+        Integer requestId = 1;
+
+        when(httpRequest.getHeader("Authorization")).thenReturn("Bearer " + token);
+        when(jwtService.getUsernameFromToken(token)).thenReturn(email);
+
+        Users mockUser = new Users();
+        mockUser.setUser_id(1);
+        when(usersRepository.findByEmail(email)).thenReturn(Optional.of(mockUser));
+
+        when(requestRepository.findByIdAndMonitorId(requestId, 1)).thenReturn(Optional.empty());
+
+        Response response = monitorService.getRequestById(requestId, httpRequest);
+
+        assertNotNull(response);
+        assertEquals("No se encontró la solicitud con los parámetros proporcionados.", response.getMessage());
+        assertNull(response.getData());
+    }
+
+    @Test
+    void testGetRequestById_InvalidToken() {
+        when(httpRequest.getHeader("Authorization")).thenReturn(null);
+
+        Response response = monitorService.getRequestById(1, httpRequest);
+
+        assertNotNull(response);
+        assertEquals("Invalid request: missing authorization token", response.getMessage());
+        assertNull(response.getData());
+
+        verifyNoInteractions(jwtService, usersRepository, requestRepository);
+    }
+    @Test
+    void testGetAllRequestsByRolAndPending_Success() {
+        String token = "test-token";
+        String email = "monitor@example.com";
+        Integer statusRequestId = 2;
+
+        when(httpRequest.getHeader("Authorization")).thenReturn("Bearer " + token);
+        when(jwtService.getUsernameFromToken(token)).thenReturn(email);
+
+        Users mockUser = new Users();
+        mockUser.setUser_id(1);
+        when(usersRepository.findByEmail(email)).thenReturn(Optional.of(mockUser));
+
+        Object[] mockRequest = new Object[]{/* Datos simulados */};
+        when(requestRepository.findAllRequestsByRolAndPending(1, statusRequestId)).thenReturn(Optional.of(mockRequest));
+
+        Response response = monitorService.getAllRequestsByRolAndPending(statusRequestId, httpRequest);
+
+        assertNotNull(response);
+        assertEquals("Solicitud encontrada.", response.getMessage());
+        assertEquals(mockRequest, response.getData());
+
+        verify(jwtService).getUsernameFromToken(token);
+        verify(usersRepository).findByEmail(email);
+        verify(requestRepository).findAllRequestsByRolAndPending(1, statusRequestId);
+    }
+
+    @Test
+    void testGetAllRequestsByRolAndPending_NoRequestsFound() {
+        String token = "test-token";
+        String email = "monitor@example.com";
+        Integer statusRequestId = 2;
+
+        when(httpRequest.getHeader("Authorization")).thenReturn("Bearer " + token);
+        when(jwtService.getUsernameFromToken(token)).thenReturn(email);
+
+        Users mockUser = new Users();
+        mockUser.setUser_id(1);
+        when(usersRepository.findByEmail(email)).thenReturn(Optional.of(mockUser));
+
+        when(requestRepository.findAllRequestsByRolAndPending(1, statusRequestId)).thenReturn(Optional.empty());
+
+        Response response = monitorService.getAllRequestsByRolAndPending(statusRequestId, httpRequest);
+
+        assertNotNull(response);
+        assertEquals("No se encontró la solicitud con los parámetros proporcionados.", response.getMessage());
+        assertNull(response.getData());
+    }
+
+    @Test
+    void testGetAllRequestsByRolAndPending_InvalidToken() {
+        when(httpRequest.getHeader("Authorization")).thenReturn(null);
+
+        Response response = monitorService.getAllRequestsByRolAndPending(2, httpRequest);
+
+        assertNotNull(response);
+        assertEquals("Invalid request: missing authorization token", response.getMessage());
+        assertNull(response.getData());
+
+        verifyNoInteractions(jwtService, usersRepository, requestRepository);
+    }
+
+
 }

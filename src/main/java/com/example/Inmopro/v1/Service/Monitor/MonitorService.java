@@ -90,6 +90,9 @@ public class MonitorService {
                     followUpRequestRepository.save(followUpRequest);
                     try {
                         Resource resource = resourceLoader.getResource("classpath:static/RequestMessage.html");
+                        if (!resource.exists()) {
+                            throw new RuntimeException("File not found");
+                        }
                         try (InputStream inputStream = resource.getInputStream()) {
                             String htmlContent = new String(inputStream.readAllBytes(), StandardCharsets.UTF_8);
                             mailService.sendHtmlEmail(emailRequest, "Request created", htmlContent);
@@ -99,6 +102,7 @@ public class MonitorService {
                     } catch (RuntimeException e) {
                         return RequestResponse.builder().message("Error loading email template").build();
                     }
+
 
                     return RequestResponse.builder().message("Request created").build();
 
@@ -113,7 +117,6 @@ public class MonitorService {
 
         return RequestResponse.builder().message("Invalid request: missing authorization token").build();
     }
-
 
     private Integer isUserMonitor(HttpServletRequest httpRequest) {
         String authorizationHeader = httpRequest.getHeader("Authorization");
