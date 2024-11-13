@@ -24,6 +24,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
 import jakarta.servlet.http.HttpServletRequest;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -35,6 +36,7 @@ import javax.management.relation.Role;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
 import java.util.Optional;
 
 @ExtendWith(MockitoExtension.class)
@@ -100,7 +102,7 @@ public class MonitorServiceTest {
         when(requestRepository.existsByTenantAndStatusId(mockUserTenant, mockRequestStatus)).thenReturn(false);
 
         Resource mockResource = mock(Resource.class);
-        when(resourceLoader.getResource("classpath:static/RequestMessage.html")).thenReturn(mockResource);
+        when(resourceLoader.getResource(anyString())).thenReturn(mockResource);
         when(mockResource.exists()).thenReturn(true);  // El recurso existe
         when(mockResource.getInputStream()).thenReturn(new ByteArrayInputStream("<html>Success</html>".getBytes())); // Simulamos que podemos leerlo correctamente
 
@@ -453,6 +455,145 @@ public class MonitorServiceTest {
 
         verifyNoInteractions(jwtService, usersRepository, requestRepository);
     }
+    //aprov
+    @Test
+    public void testProcessRequest_Success() throws Exception {
+        Integer requestId = 1;
+        HttpServletRequest mockHttpRequest = mock(HttpServletRequest.class);
 
+        // Mock del encabezado Authorization
+        when(mockHttpRequest.getHeader("Authorization")).thenReturn("Bearer mockToken");
+
+        // Mock del token y usuario
+        when(jwtService.getUsernameFromToken("mockToken")).thenReturn("monitor@example.com");
+        Users mockUser = new Users();
+        Roles monitorRole = new Roles();
+        monitorRole.setId(3);  // id para el rol de monitor
+        mockUser.setRole(monitorRole);
+        mockUser.setEmail("monitor@example.com");
+        when(usersRepository.findByEmail("monitor@example.com")).thenReturn(Optional.of(mockUser));
+
+        // Mock de la solicitud en estado pendiente
+        Request mockRequest = new Request();
+        mockRequest.setStatusId(new RequestStatus(1, "Pending", "", true));
+        when(requestRepository.findByRequestId(requestId)).thenReturn(Optional.of(mockRequest));
+
+        RequestStatus inProcessStatus = new RequestStatus(2, "Processed", "", true);
+        when(requestStatusRepository.findById(2)).thenReturn(Optional.of(inProcessStatus));
+
+        Resource mockResource = mock(Resource.class);
+        when(resourceLoader.getResource("classpath:static/RequestProcessedMessage.html")).thenReturn(mockResource);
+        //when(mockResource.exists()).thenReturn(true);  // El recurso existe
+        when(mockResource.getInputStream()).thenReturn(new ByteArrayInputStream("<html>Success</html>".getBytes())); // Simulamos que podemos leerlo correctamente
+
+        // Simulando que se envía el correo
+        doNothing().when(mailService).sendHtmlEmail(anyString(), anyString(), anyString());
+        // Ejecutar método
+        RequestResponse response = monitorService.process(requestId, mockHttpRequest);
+
+        // Verificar resultados
+        assertEquals("Request Process", response.getMessage());
+        verify(requestRepository, times(1)).save(mockRequest);
+        assertEquals(2, mockRequest.getStatusId().getId());
+    }
+
+    @Test
+    public void testProcessRequest_CannotChangeFromCancelled() throws Exception {
+        Integer requestId = 1;
+        HttpServletRequest mockHttpRequest = mock(HttpServletRequest.class);
+
+        // Mock del encabezado Authorization y usuario con rol de monitor
+        when(mockHttpRequest.getHeader("Authorization")).thenReturn("Bearer mockToken");
+        when(jwtService.getUsernameFromToken("mockToken")).thenReturn("monitor@example.com");
+        Users mockUser = new Users();
+        Roles monitorRole = new Roles();
+        monitorRole.setId(3);
+        mockUser.setRole(monitorRole);
+        when(usersRepository.findByEmail("monitor@example.com")).thenReturn(Optional.of(mockUser));
+
+        // Mock de la solicitud en estado cancelado
+        Request mockRequest = new Request();
+        mockRequest.setStatusId(new RequestStatus(4, "Cancelled", "", true)); // Estado cancelado
+        when(requestRepository.findByRequestId(requestId)).thenReturn(Optional.of(mockRequest));
+
+        RequestResponse response = monitorService.process(requestId, mockHttpRequest);
+
+        // Verificar resultados
+        assertEquals("Cannot change the status of a cancelled request", response.getMessage());
+        verify(requestRepository, never()).save(mockRequest);
+    }
+    @Test
+    public void testOnHoldRequest_Success() throws Exception {
+        Integer requestId = 1;
+        HttpServletRequest mockHttpRequest = mock(HttpServletRequest.class);
+
+        // Mock del encabezado Authorization y usuario con rol de monitor
+        when(mockHttpRequest.getHeader("Authorization")).thenReturn("Bearer mockToken");
+        when(jwtService.getUsernameFromToken("mockToken")).thenReturn("monitor@example.com");
+        Users mockUser = new Users();
+        Roles monitorRole = new Roles();
+        monitorRole.setId(3);
+        mockUser.setRole(monitorRole);
+        when(usersRepository.findByEmail("monitor@example.com")).thenReturn(Optional.of(mockUser));
+
+        // Mock de la solicitud en estado pendiente
+        Request mockRequest = new Request();
+        mockRequest.setStatusId(new RequestStatus(1, "Pending", "", true));
+        when(requestRepository.findByRequestId(requestId)).thenReturn(Optional.of(mockRequest));
+
+        RequestStatus onHoldStatus = new RequestStatus(6, "On Hold", "", true);
+        when(requestStatusRepository.findById(6)).thenReturn(Optional.of(onHoldStatus));
+
+        Resource mockResource = mock(Resource.class);
+        when(resourceLoader.getResource("classpath:static/RequestMessage.html")).thenReturn(mockResource);
+        //when(mockResource.exists()).thenReturn(true);  // El recurso existe
+        when(mockResource.getInputStream()).thenReturn(new ByteArrayInputStream("<html>Success</html>".getBytes())); // Simulamos que podemos leerlo correctamente
+
+
+        // Ejecutar método
+        RequestResponse response = monitorService.onHoldRequest(requestId, mockHttpRequest);
+
+        // Verificar resultados
+        assertEquals("Request On Hold", response.getMessage());
+        verify(requestRepository, times(1)).save(mockRequest);
+        assertEquals(6, mockRequest.getStatusId().getId());
+    }
+    @Test
+    public void testCancelRequest_Success() throws Exception {
+        Integer requestId = 1;
+        HttpServletRequest mockHttpRequest = mock(HttpServletRequest.class);
+
+        // Mock del encabezado Authorization y usuario con rol de monitor
+        when(mockHttpRequest.getHeader("Authorization")).thenReturn("Bearer mockToken");
+        when(jwtService.getUsernameFromToken("mockToken")).thenReturn("monitor@example.com");
+        Users mockUser = new Users();
+        Roles monitorRole = new Roles();
+        monitorRole.setId(3);
+        mockUser.setRole(monitorRole);
+        when(usersRepository.findByEmail("monitor@example.com")).thenReturn(Optional.of(mockUser));
+
+        // Mock de la solicitud en estado pendiente
+        Request mockRequest = new Request();
+        mockRequest.setStatusId(new RequestStatus(1, "Pending", "", true));
+        when(requestRepository.findByRequestId(requestId)).thenReturn(Optional.of(mockRequest));
+
+        RequestStatus cancelledStatus = new RequestStatus(4, "Cancelled", "", true);
+        when(requestStatusRepository.findById(4)).thenReturn(Optional.of(cancelledStatus));
+
+        Resource mockResource = mock(Resource.class);
+        when(resourceLoader.getResource("classpath:static/RequestCancelMessage.html")).thenReturn(mockResource);
+//        when(mockResource.exists()).thenReturn(true);  // El recurso existe
+        when(mockResource.getInputStream()).thenReturn(new ByteArrayInputStream("<html>Success</html>".getBytes())); // Simulamos que podemos leerlo correctamente
+
+        // Asegúrate de que todos los parámetros estén cubiertos por matchers
+        doNothing().when(mailService).sendHtmlEmail(eq((String) null), eq("Request Cancelled"), eq("<html>Success</html>"));
+
+        RequestResponse response = monitorService.cancelRequest(requestId, mockHttpRequest);
+
+        // Verificar resultados
+        assertEquals("Request Cancelled", response.getMessage());
+        verify(requestRepository, times(1)).save(mockRequest);
+        assertEquals(4, mockRequest.getStatusId().getId());
+    }
 
 }

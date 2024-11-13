@@ -220,45 +220,122 @@ public class MonitorService {
         }
         return MonitorResponse.builder().message("Invalid request: missing authorization token").build();
     }
-
     public RequestResponse process(Integer requestId, HttpServletRequest httpRequest) throws MessagingException, IOException {
-        String authorizationHeader = httpRequest.getHeader("Authorization");
-
-        if (authorizationHeader != null && authorizationHeader.startsWith("Bearer ")) {
-            String token = authorizationHeader.substring(7);
-            String email = jwtService.getUsernameFromToken(token);
-
-            Optional<Users> userOptionalToken = usersRepository.findByEmail(email);
-            if (userOptionalToken.isPresent() && userOptionalToken.get().getUser_id() != 3 ) {
-                return RequestResponse.builder().message("Invalid process by rol").build();
-            }
-            Optional<Request> requestOptional = requestRepository.findByRequestId(requestId);
-            if (requestOptional.isPresent() && requestOptional.get().getStatusId().getId() != 2 ) {
-                return RequestResponse.builder().message("Invalid process this arent in process").build();
-            }
-            Optional<RequestStatus> requestStatusOptional = requestStatusRepository.findById(3);
-            if (requestStatusOptional.isPresent() ) {
-                return RequestResponse.builder().message("not exist process").build();
-            }
-
-            Request request = requestOptional.get();
-            RequestStatus newStatus = requestStatusOptional.get();
-
-            request.setStatusId(newStatus);
-            requestRepository.save(request);
-
-            request.setStatusId(newStatus);
-            requestRepository.save(request);
-
-            Resource resource = resourceLoader.getResource("classpath:static/RequestApprovedMessage.html.html");
-            try (InputStream inputStream = resource.getInputStream()) {
-                String htmlContent = new String(inputStream.readAllBytes(), StandardCharsets.UTF_8);
-                mailService.sendHtmlEmail(userOptionalToken.get().getEmail(), "Request approved", htmlContent);
-            }
-
-            return RequestResponse.builder().message("Request Approved").build();
-        }
-        return RequestResponse.builder().message("Invalid process").build();
+        return processRequestWithNewStatus(requestId, httpRequest, 2, "Request Process", "RequestProcessedMessage.html");
 
     }
+
+    public RequestResponse cancelRequest(Integer requestId, HttpServletRequest httpRequest) throws MessagingException, IOException {
+        return processRequestWithNewStatus(requestId, httpRequest, 4, "Request Cancelled", "RequestCancelMessage.html");
+
+    }
+
+    public RequestResponse onHoldRequest(Integer requestId, HttpServletRequest httpRequest) throws MessagingException, IOException {
+        return processRequestWithNewStatus(requestId, httpRequest, 6, "Request On Hold", "RequestMessage.html");
+
+    }
+    private RequestResponse processRequestWithNewStatus(Integer requestId, HttpServletRequest httpRequest, int newStatusId, String successMessage, String emailTemplate) throws MessagingException, IOException {
+        String authorizationHeader = httpRequest.getHeader("Authorization");
+
+        if (authorizationHeader == null || !authorizationHeader.startsWith("Bearer ")) {
+            return RequestResponse.builder().message("Invalid or missing Authorization header").build();
+        }
+
+        String token = authorizationHeader.substring(7);
+        String email;
+        try {
+            email = jwtService.getUsernameFromToken(token);
+        } catch (Exception e) {
+            return RequestResponse.builder().message("Invalid token").build();
+        }
+
+        Optional<Users> userOptionalToken = usersRepository.findByEmail(email);
+        if (userOptionalToken.isEmpty() || userOptionalToken.get().getRole().getId() != 3) {
+            return RequestResponse.builder().message("Invalid process by role").build();
+        }
+
+        Optional<Request> requestOptional = requestRepository.findByRequestId(requestId);
+        if (requestOptional.isEmpty()) {
+            return RequestResponse.builder().message("Request not found").build();
+        }
+
+        Request request = requestOptional.get();
+
+        // Verificar si el estado actual es "Cancelado"
+        if (request.getStatusId().getId() == 4) { // Suponiendo que 4 es el ID del estado "Cancelado"
+            return RequestResponse.builder().message("Cannot change the status of a cancelled request").build();
+        }
+
+        // Verificar si la solicitud ya está en el nuevo estado
+        if (request.getStatusId().getId() == newStatusId) {
+            return RequestResponse.builder().message("Request is already in the desired status").build();
+        }
+
+        Optional<RequestStatus> requestStatusOptional = requestStatusRepository.findById(newStatusId);
+        if (requestStatusOptional.isEmpty()) {
+            return RequestResponse.builder().message("Request status not found").build();
+        }
+
+        RequestStatus newStatus = requestStatusOptional.get();
+        request.setStatusId(newStatus);
+        requestRepository.save(request);
+
+        Resource resource = resourceLoader.getResource("classpath:static/" + emailTemplate);
+        try (InputStream inputStream = resource.getInputStream()) {
+            String htmlContent = new String(inputStream.readAllBytes(), StandardCharsets.UTF_8);
+            mailService.sendHtmlEmail(userOptionalToken.get().getEmail(), successMessage, htmlContent);
+        } catch (IOException e) {
+            return RequestResponse.builder().message("Error sending email").build();
+        }
+
+        return RequestResponse.builder().message(successMessage).build();
+    }
+
+    /*private RequestResponse processRequestWithNewStatus(Integer requestId, HttpServletRequest httpRequest, int newStatusId, String successMessage, String emailTemplate) throws MessagingException, IOException {
+        String authorizationHeader = httpRequest.getHeader("Authorization");
+
+        if (authorizationHeader == null || !authorizationHeader.startsWith("Bearer ")) {
+            return RequestResponse.builder().message("Invalid or missing Authorization header").build();
+        }
+
+        String token = authorizationHeader.substring(7);
+        String email;
+        try {
+            email = jwtService.getUsernameFromToken(token);
+        } catch (Exception e) {
+            return RequestResponse.builder().message("Invalid token").build();
+        }
+
+        Optional<Users> userOptionalToken = usersRepository.findByEmail(email);
+        if (userOptionalToken.isEmpty() || userOptionalToken.get().getUser_id() != 3) {
+            return RequestResponse.builder().message("Invalid process by role").build();
+        }
+
+        Optional<Request> requestOptional = requestRepository.findByRequestId(requestId);
+        if (requestOptional.isEmpty() || requestOptional.get().getStatusId().getId() != 2) { // Solo se pueden modificar solicitudes en proceso
+            return RequestResponse.builder().message("Invalid process, request not in process").build();
+        }
+
+        Optional<RequestStatus> requestStatusOptional = requestStatusRepository.findById(newStatusId);
+        if (requestStatusOptional.isEmpty()) {
+            return RequestResponse.builder().message("Request status not found").build();
+        }
+
+        Request request = requestOptional.get();
+        RequestStatus newStatus = requestStatusOptional.get();
+
+        request.setStatusId(newStatus);
+        requestRepository.save(request);
+
+        Resource resource = resourceLoader.getResource("classpath:static/" + emailTemplate);
+        try (InputStream inputStream = resource.getInputStream()) {
+            String htmlContent = new String(inputStream.readAllBytes(), StandardCharsets.UTF_8);
+            mailService.sendHtmlEmail(userOptionalToken.get().getEmail(), successMessage, htmlContent);
+        } catch (IOException e) {
+            return RequestResponse.builder().message("Error sending email").build();
+        }
+
+        return RequestResponse.builder().message(successMessage).build();
+    }
+*/
 }

@@ -72,28 +72,56 @@ public class MonitorController {
     public MonitorResponse getAllRequestsByRolAndPending(@PathVariable Integer statusRequestId, HttpServletRequest httpRequest) {
         return monitorService.getAllRequestsByRolAndPending(statusRequestId, httpRequest);
     }
-    @Operation(summary = "Cambiar de estado las solicitudes pendientes ")
-    @Parameter(name = "requestId", description = "ID del estado de la solicitud pendiente para cambio a procesado", required = true)
+    @Operation(summary = "Change request status to 'Processed'", description = "Processes a request, changing its status to 'Processed'")
+    @Parameter(name = "requestId", description = "ID of the request to be processed", required = true)
     @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "Solicitudes encontradas",
-                    content = @Content(schema = @Schema(implementation = RequestRequest.class))),
-            @ApiResponse(responseCode = "404", description = "No se encontraron solicitudes pendientes con el estado especificado")
+            @ApiResponse(responseCode = "200", description = "Request successfully processed",
+                    content = @Content(schema = @Schema(implementation = RequestResponse.class))),
+            @ApiResponse(responseCode = "400", description = "Invalid request or authorization"),
+            @ApiResponse(responseCode = "404", description = "Request not found")
     })
     @PatchMapping("{requestId}/process")
-    public ResponseEntity<RequestResponse> processRequest(@PathVariable Integer requestId,HttpServletRequest httpRequest) {
+    public ResponseEntity<RequestResponse> processRequest(@PathVariable Integer requestId, HttpServletRequest httpRequest) {
         return handleRequestProcess(() -> monitorService.process(requestId, httpRequest));
+    }
+
+    @Operation(summary = "Cancel a request", description = "Changes the status of a request to 'Cancelled'")
+    @Parameter(name = "requestId", description = "ID of the request to be cancelled", required = true)
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Request successfully cancelled",
+                    content = @Content(schema = @Schema(implementation = RequestResponse.class))),
+            @ApiResponse(responseCode = "400", description = "Invalid request or authorization"),
+            @ApiResponse(responseCode = "404", description = "Request not found")
+    })
+    @PostMapping("/{requestId}/cancel")
+    public ResponseEntity<RequestResponse> cancelRequest(@PathVariable Integer requestId, HttpServletRequest httpRequest) {
+        return handleRequestProcess(() -> monitorService.cancelRequest(requestId, httpRequest));
+    }
+
+    @Operation(summary = "Put a request on hold", description = "Changes the status of a request to 'On Hold'")
+    @Parameter(name = "requestId", description = "ID of the request to be put on hold", required = true)
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Request successfully put on hold",
+                    content = @Content(schema = @Schema(implementation = RequestResponse.class))),
+            @ApiResponse(responseCode = "400", description = "Invalid request or authorization"),
+            @ApiResponse(responseCode = "404", description = "Request not found")
+    })
+    @PostMapping("/{requestId}/onhold")
+    public ResponseEntity<RequestResponse> onHoldRequest(@PathVariable Integer requestId, HttpServletRequest httpRequest) {
+        return handleRequestProcess(() -> monitorService.onHoldRequest(requestId, httpRequest));
     }
 
     private ResponseEntity<RequestResponse> handleRequestProcess(ThrowingSupplier<RequestResponse> supplier) {
         try {
             return ResponseEntity.ok(supplier.get());
         } catch (IOException e) {
-            return ResponseEntity.status(500).body(RequestResponse.builder().message("Error to read file").build());
+            return ResponseEntity.status(500).body(RequestResponse.builder().message("Error reading file").build());
         } catch (MessagingException e) {
-            return ResponseEntity.status(500).body(RequestResponse.builder().message("Error to send email").build());
+            return ResponseEntity.status(500).body(RequestResponse.builder().message("Error sending email").build());
         } catch (Exception e) {
             return ResponseEntity.status(500).body(RequestResponse.builder().message("Internal Server Error").build());
         }
-
     }
+
+
 }
