@@ -14,28 +14,30 @@ import java.io.IOException;
 import java.util.Optional;
 
 @RestController
-@RequestMapping("/api/v1/monitor")
+@RequestMapping("/api/v1/monitor/request")
 public class MonitorController {
     @Autowired
     private MonitorService monitorService;
 
-    @GetMapping("/requests")
+    @GetMapping()
     public Response getSolicitudes(HttpServletRequest httpRequest) {
         return monitorService.getAllRequestsByRol(httpRequest);
     }
-    @GetMapping("/requests/{requestId}")
+    @GetMapping("/{requestId}")
     public Response getRequestById(@PathVariable Integer requestId, HttpServletRequest httpRequest) {
         return monitorService.getRequestById(requestId, httpRequest);
     }
-
-    @PostMapping("create")
+    @PostMapping()
     public ResponseEntity<RequestResponse> createRequest(@RequestBody RequestMonitor request, HttpServletRequest httpRequest) {
         return handleRequestProcess(() -> monitorService.create(request, httpRequest));
     }
-    @GetMapping("/request/statusPending/{statusRequestId}")
+    @GetMapping("/statusPending/{statusRequestId}")
     public Response getAllRequestsByRolAndPending(@PathVariable Integer statusRequestId, HttpServletRequest httpRequest) {
         return monitorService.getAllRequestsByRolAndPending(statusRequestId, httpRequest);
-
+    }
+    @PatchMapping("{requestId}/process")
+    public ResponseEntity<RequestResponse> processRequest(@PathVariable Integer requestId,HttpServletRequest httpRequest) {
+        return handleRequestProcess(() -> monitorService.process(requestId, httpRequest));
     }
 
     private ResponseEntity<RequestResponse> handleRequestProcess(ThrowingSupplier<RequestResponse> supplier) {

@@ -220,4 +220,45 @@ public class MonitorService {
         }
         return Response.builder().message("Invalid request: missing authorization token").build();
     }
+
+    public RequestResponse process(Integer requestId, HttpServletRequest httpRequest) throws MessagingException, IOException {
+        String authorizationHeader = httpRequest.getHeader("Authorization");
+
+        if (authorizationHeader != null && authorizationHeader.startsWith("Bearer ")) {
+            String token = authorizationHeader.substring(7);
+            String email = jwtService.getUsernameFromToken(token);
+
+            Optional<Users> userOptionalToken = usersRepository.findByEmail(email);
+            if (userOptionalToken.isPresent() && userOptionalToken.get().getUser_id() != 3 ) {
+                return RequestResponse.builder().message("Invalid process by rol").build();
+            }
+            Optional<Request> requestOptional = requestRepository.findByRequestId(requestId);
+            if (requestOptional.isPresent() && requestOptional.get().getStatusId().getId() != 2 ) {
+                return RequestResponse.builder().message("Invalid process this arent in process").build();
+            }
+            Optional<RequestStatus> requestStatusOptional = requestStatusRepository.findById(3);
+            if (requestStatusOptional.isPresent() ) {
+                return RequestResponse.builder().message("not exist process").build();
+            }
+
+            Request request = requestOptional.get();
+            RequestStatus newStatus = requestStatusOptional.get();
+
+            request.setStatusId(newStatus);
+            requestRepository.save(request);
+
+            request.setStatusId(newStatus);
+            requestRepository.save(request);
+
+            Resource resource = resourceLoader.getResource("classpath:static/RequestApprovedMessage.html.html");
+            try (InputStream inputStream = resource.getInputStream()) {
+                String htmlContent = new String(inputStream.readAllBytes(), StandardCharsets.UTF_8);
+                mailService.sendHtmlEmail(userOptionalToken.get().getEmail(), "Request approved", htmlContent);
+            }
+
+            return RequestResponse.builder().message("Request Approved").build();
+        }
+        return RequestResponse.builder().message("Invalid process").build();
+
+    }
 }
