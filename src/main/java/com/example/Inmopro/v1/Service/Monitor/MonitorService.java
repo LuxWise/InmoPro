@@ -218,7 +218,7 @@ public class MonitorService {
                     .data(request.get())
                     .build();
         }
-        return MonitorResponse.builder().message("Invalid request: missing authorization token").build();
+        return MonitorResponse.builder().message("Invalid request: by ").build();
     }
     public RequestResponse process(Integer requestId, HttpServletRequest httpRequest) throws MessagingException, IOException {
         return processRequestWithNewStatus(requestId, httpRequest, 2, "Request Process", "RequestProcessedMessage.html");

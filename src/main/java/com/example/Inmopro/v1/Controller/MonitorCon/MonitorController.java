@@ -93,7 +93,7 @@ public class MonitorController {
             @ApiResponse(responseCode = "400", description = "Invalid request or authorization"),
             @ApiResponse(responseCode = "404", description = "Request not found")
     })
-    @PostMapping("/{requestId}/cancel")
+    @PatchMapping("/{requestId}/cancel")
     public ResponseEntity<RequestResponse> cancelRequest(@PathVariable Integer requestId, HttpServletRequest httpRequest) {
         return handleRequestProcess(() -> monitorService.cancelRequest(requestId, httpRequest));
     }
@@ -106,7 +106,7 @@ public class MonitorController {
             @ApiResponse(responseCode = "400", description = "Invalid request or authorization"),
             @ApiResponse(responseCode = "404", description = "Request not found")
     })
-    @PostMapping("/{requestId}/onhold")
+    @PatchMapping("/{requestId}/onhold")
     public ResponseEntity<RequestResponse> onHoldRequest(@PathVariable Integer requestId, HttpServletRequest httpRequest) {
         return handleRequestProcess(() -> monitorService.onHoldRequest(requestId, httpRequest));
     }

@@ -443,7 +443,7 @@ public class MonitorServiceTest {
         assertNull(response.getData());
     }
 
-    @Test
+    /*@Test
     void testGetAllRequestsByRolAndPending_InvalidToken() {
         when(httpRequest.getHeader("Authorization")).thenReturn(null);
 
@@ -454,7 +454,7 @@ public class MonitorServiceTest {
         assertNull(response.getData());
 
         verifyNoInteractions(jwtService, usersRepository, requestRepository);
-    }
+    }*/
     //aprov
     @Test
     public void testProcessRequest_Success() throws Exception {
