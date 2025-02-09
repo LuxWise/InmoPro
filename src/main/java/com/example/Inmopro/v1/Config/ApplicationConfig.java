@@ -1,6 +1,6 @@
 package com.example.Inmopro.v1.Config;
 
-import com.example.Inmopro.v1.Repository.UserRepository;
+import com.example.Inmopro.v1.Repository.UsersRepository;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -19,7 +19,7 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class ApplicationConfig {
 
-    private final UserRepository userRepository;
+    private final UsersRepository userRepository;
 
     @Bean
     public AuthenticationManager authenticationManager(AuthenticationConfiguration config) throws Exception
@@ -30,10 +30,10 @@ public class ApplicationConfig {
     @Bean
     public AuthenticationProvider authenticationProvider()
     {
-        DaoAuthenticationProvider authenticationProvider= new DaoAuthenticationProvider();
-        authenticationProvider.setUserDetailsService(userDetailService());
-        authenticationProvider.setPasswordEncoder(passwordEncoder());
-        return authenticationProvider;
+        DaoAuthenticationProvider daoAuthProvider= new DaoAuthenticationProvider();
+        daoAuthProvider.setUserDetailsService(userDetailService());
+        daoAuthProvider.setPasswordEncoder(passwordEncoder());
+        return daoAuthProvider;
     }
 
     @Bean
@@ -44,7 +44,7 @@ public class ApplicationConfig {
     @Bean
     public UserDetailsService userDetailService() {
         return username -> userRepository.findByEmail(username)
-                .orElseThrow(()-> new UsernameNotFoundException("User not found"));
+                .orElseThrow(() -> new UsernameNotFoundException("User with email " + username + " not found"));
     }
 
 }
